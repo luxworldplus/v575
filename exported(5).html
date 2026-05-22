@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luxworld Studio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Puter.js Integration -->
+    <script src="https://js.puter.com/v2/"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Playfair+Display:wght@700&family=Roboto+Slab&family=Montserrat:wght@400;900&family=Open+Sans:wght@400;700&family=Lato:wght@400;700&family=Poppins:wght@400;700&family=Merriweather:wght@400;700&family=Oswald:wght@400;700&family=Raleway:wght@400;700&family=Pacifico&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #e2e8f0; overflow: hidden; }
+        .text-gold { color: #fbbf24; }
+        .bg-gold { background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); }
+        .border-gold { border-color: #d97706; }
+        .hover-gold:hover { color: #fbbf24; }
+        
+        #workspace {
+            background-image: linear-gradient(45deg, #1e293b 25%, transparent 25%), linear-gradient(-45deg, #1e293b 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #1e293b 75%), linear-gradient(-45deg, transparent 75%, #1e293b 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            transition: background 0.3s;
+            outline: none; /* Remove focus outline */
+        }
+        #artboard {
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            transition: transform 0.2s;
+            transform-origin: center center;
+            overflow: hidden;
+            background-size: cover;
+            background-position: center;
+        }
+        .design-element { position: absolute; cursor: move; user-select: none; box-sizing: border-box; transform-origin: center center; }
+        .anim-wrapper { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+        .design-element[data-type="text"] .anim-wrapper { display: block; }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes zoomIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @keyframes zoomOut { from { transform: scale(1); opacity: 1; } to { transform: scale(0); opacity: 0; } }
+        @keyframes bounceIn { 0% { transform: scale(0.3); opacity: 0; } 50% { transform: scale(1.05); opacity: 1; } 70% { transform: scale(0.9); } 100% { transform: scale(1); } }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes appear { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes disappear { from { opacity: 1; } to { opacity: 0; } }
+
+        .anim-fade { animation: fadeIn 1s ease-out forwards; }
+        .anim-fade-out { animation: fadeOut 1s ease-out forwards; }
+        .anim-slide { animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .anim-zoom { animation: zoomIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .anim-zoom-out { animation: zoomOut 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .anim-bounce { animation: bounceIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .anim-spin { animation: spin 1s linear; }
+        .anim-appear { animation: appear 0.1s linear forwards; }
+        .anim-disappear { animation: disappear 0.1s linear forwards; }
+
+        .design-element[contenteditable="true"] { cursor: text; outline: 2px dashed #fbbf24; user-select: text; min-width: 50px; }
+        .design-element.selected { outline: 2px solid #fbbf24; outline-offset: 2px; }
+        
+        body.presenting header, body.presenting aside, body.presenting #slide-strip-container { display: none !important; }
+        body.presenting #workspace { background: black; padding: 0; align-items: center; justify-content: center; overflow: hidden; }
+        body.presenting #artboard { box-shadow: none; margin: auto; transform: scale(1.2); }
+        body.presenting .design-element.selected { outline: none; }
+        body.presenting .resize-handle { display: none !important; }
+        
+        #exit-present-btn { display: none; }
+        body.presenting #exit-present-btn { display: flex; }
+
+        body.read-only aside { display: none !important; } 
+        body.read-only .edit-control { display: none !important; } 
+        body.read-only .design-element { cursor: default !important; } 
+        body.read-only .design-element.selected { outline: none !important; } 
+        body.read-only .resize-handle { display: none !important; }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        #slide-strip::-webkit-scrollbar { height: 4px; }
+        #slide-strip::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+        #slide-strip::-webkit-scrollbar-thumb { background: #fbbf24; border-radius: 4px; }
+
+        input[type="color"] { -webkit-appearance: none; border: none; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; padding: 0; cursor: pointer; border: 2px solid #334155; }
+        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        input[type="color"]::-webkit-color-swatch { border: none; }
+
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 100; align-items: center; justify-content: center; }
+        .modal-overlay.active { display: flex; }
+
+        .resize-handle { position: absolute; width: 12px; height: 12px; background-color: #fbbf24; border: 2px solid white; border-radius: 50%; bottom: -6px; right: -6px; cursor: nwse-resize; display: none; z-index: 50; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .design-element.selected .resize-handle { display: block; }
+
+        .ai-loader { border: 3px solid #f3f3f3; border-top: 3px solid #9333ea; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="flex flex-col h-screen">
+
+    <div id="dashboard-screen" class="fixed inset-0 bg-slate-900 z-[1000] flex flex-col overflow-y-auto">
+        <div class="h-16 border-b border-slate-800 flex items-center justify-between px-8 bg-slate-950 sticky top-0 z-10 shadow-md">
+            <div class="flex items-center gap-3">
+                <svg width="32" height="32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M50 5 L95 50 L50 95 L5 50 Z" stroke="#fbbf24" stroke-width="4" fill="none" />
+                    <path d="M50 15 L85 50 L50 85 L15 50 Z" stroke="#fbbf24" stroke-width="2" fill="none" />
+                    <text x="50" y="65" font-family="serif" font-size="40" font-weight="bold" fill="#fbbf24" text-anchor="middle">L</text>
+                </svg>
+                <h1 class="font-bold text-white tracking-wide text-xl">LUXWORLD+ <span class="text-gold font-normal">STUDIO</span></h1>
+            </div>
+        </div>
+        <div class="max-w-6xl mx-auto w-full p-8 flex-grow flex flex-col justify-start">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 border-b border-slate-800 pb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-white mb-1">My Presentation Hub</h2>
+                    <p class="text-slate-400 text-xs">Create, modify, and access all your dynamic slider projects safely stored on this computer.</p>
+                </div>
+                <button onclick="createNewProject()" class="bg-gold hover:opacity-90 text-white font-bold text-xs px-6 py-3 rounded-full flex items-center justify-center gap-2 shadow-lg transition-all transform hover:scale-[1.02] active:scale-[0.98]">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    Create New Presentation
+                </button>
+            </div>
+            
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                Recent Creations
+            </h3>
+            <div id="recent-projects-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <!-- Javascript will render recent presentation cards here -->
+            </div>
+        </div>
+    </div>
+
+    <header class="h-14 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4 z-50">
+        <div class="flex items-center gap-1">
+            <button onclick="showDashboard()" class="p-2 hover:bg-slate-800 rounded-lg text-gold hover:text-yellow-300 transition-colors mr-2" title="Back to Dashboard">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            </button>
+            <input type="text" id="project-title" class="bg-transparent text-white font-bold tracking-wide text-sm outline-none border-b border-transparent focus:border-gold w-40 sm:w-48 px-1 transition-colors" value="Untitled Presentation" onchange="renameActiveProject(this.value)">
+        </div>
+        <div class="flex items-center gap-3">
+            <!-- New Paste Mode Toggle -->
+            <div class="flex items-center bg-slate-800 rounded-full p-0.5 border border-slate-700 shadow-inner mr-2 edit-control">
+                <button id="paste-mode-auto" onclick="setPasteMode('auto')" class="px-3 py-1 text-[10px] rounded-full bg-slate-600 text-white font-bold transition-colors" title="Smart Paste (Auto-detects web vs studio)">Auto Paste</button>
+                <button id="paste-mode-web" onclick="setPasteMode('web')" class="px-3 py-1 text-[10px] rounded-full text-slate-400 hover:text-white transition-colors" title="Force paste images/text from Web">Web</button>
+                <button id="paste-mode-studio" onclick="setPasteMode('studio')" class="px-3 py-1 text-[10px] rounded-full text-slate-400 hover:text-white transition-colors" title="Force paste Studio elements">Studio</button>
+            </div>
+
+            <button onclick="togglePresentation()" class="text-xs text-white bg-green-700 hover:bg-green-600 px-4 py-1.5 rounded-full transition-colors flex items-center gap-2 font-bold shadow-lg mr-2"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>Present</button>
+            
+            <button onclick="openSaveModal('save')" class="edit-control text-xs text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded transition-colors flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>Save</button>
+            <button onclick="openSaveModal('view')" class="edit-control text-xs text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded transition-colors flex items-center gap-1" title="Share Read-Only Code"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>Share View</button>
+            <button onclick="openLoadModal()" class="text-xs text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded transition-colors flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>Load</button>
+            
+            <button onclick="document.getElementById('import-html-input').click()" class="text-xs text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded transition-colors flex items-center gap-1 border border-slate-600" title="Import exported HTML file and make it editable">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 15v4c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2v-4M17 9l-5 5-5-5M12 12.8V2.5"/></svg>
+                File Upload
+            </button>
+            <input type="file" id="import-html-input" accept=".html" class="hidden" onchange="handleHTMLImport(this)">
+
+            <div class="h-4 w-px bg-slate-700 mx-1 edit-control"></div>
+            <button onclick="exportToHTML()" class="edit-control bg-gold hover:opacity-90 text-white text-xs font-bold px-4 py-2 rounded-full transition-transform active:scale-95 flex items-center gap-2">Export</button>
+            <button onclick="openPublishModal()" class="edit-control bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-full transition-transform active:scale-95 flex items-center gap-2">Publish</button>
+        </div>
+    </header>
+    <button id="exit-present-btn" onclick="togglePresentation()" class="fixed top-4 right-4 z-[100] bg-white/10 hover:bg-white/30 text-white p-3 rounded-full backdrop-blur-sm transition-all cursor-pointer"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+
+    <div class="flex flex-grow overflow-hidden">
+        <aside class="w-20 bg-slate-900 border-r border-slate-800 flex flex-col items-center py-4 gap-6 z-40 overflow-y-auto">
+            <button onclick="openAiModal()" class="group flex flex-col items-center gap-1 w-full relative"><div class="w-10 h-10 bg-slate-800 group-hover:bg-purple-900 rounded-xl flex items-center justify-center transition-colors border border-purple-500/50 group-hover:border-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.2)]"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d8b4fe" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path><path d="M12 22l10-5"></path></svg></div><span class="text-[10px] text-purple-400 font-bold">AI</span></button>
+            <div class="w-8 h-px bg-slate-800"></div>
+            
+            <button onclick="openExtModal()" class="group flex flex-col items-center gap-1 w-full"><div class="w-10 h-10 bg-slate-800 group-hover:bg-indigo-900 rounded-xl flex items-center justify-center transition-colors border border-slate-700 group-hover:border-indigo-400 shadow-[0_0_10px_rgba(99,102,241,0.2)]"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg></div><span class="text-[10px] text-indigo-400 font-bold">Exts</span></button>
+
+            <button onclick="showPanel('bg')" class="group flex flex-col items-center gap-1 w-full"><div class="w-10 h-10 bg-slate-500 group-hover:text-gold font-medium"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-slate-300 group-hover:text-white"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg></div><span class="text-[10px] text-slate-500 group-hover:text-gold font-medium">Bg</span></button>
+            <button onclick="addElement('text')" class="group flex flex-col items-center gap-1 w-full"><div class="w-10 h-10 bg-slate-800 group-hover:bg-slate-700 rounded-xl flex items-center justify-center transition-colors border border-slate-700 group-hover:border-gold"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-slate-300 group-hover:text-white"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg></div><span class="text-[10px] text-slate-500 group-hover:text-gold font-medium">Text</span></button>
+            <button onclick="addElement('rect')" class="group flex flex-col items-center gap-1 w-full"><div class="w-10 h-10 bg-slate-800 group-hover:bg-slate-700 rounded-xl flex items-center justify-center transition-colors border border-slate-700 group-hover:border-gold"><div class="w-5 h-5 border-2 border-slate-300 group-hover:border-white rounded-sm"></div></div><span class="text-[10px] text-slate-500 group-hover:text-gold font-medium">Box</span></button>
+            <button onclick="addElement('circle')" class="group flex flex-col items-center gap-1 w-full"><div class="w-10 h-10 bg-slate-800 group-hover:bg-slate-700 rounded-xl flex items-center justify-center transition-colors border border-slate-700 group-hover:border-gold"><div class="w-5 h-5 border-2 border-slate-300 group-hover:border-white rounded-full"></div></div><span class="text-[10px] text-slate-500 group-hover:text-gold font-medium">Circle</span></button>
+            <button onclick="addElement('line')" class="group flex flex-col items-center gap-1 w-full"><div class="w-10 h-10 bg-slate-800 group-hover:bg-slate-700 rounded-xl flex items-center justify-center transition-colors border border-slate-700 group-hover:border-gold"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-slate-300 group-hover:text-white"><line x1="5" y1="12" x2="19" y2="12"></line></svg></div><span class="text-[10px] text-slate-500 group-hover:text-gold font-medium">Line</span></button>
+            <button onclick="addElement('arrow')" class="group flex flex-col items-center gap-1 w-full"><div class="w-10 h-10 bg-slate-800 group-hover:bg-slate-700 rounded-xl flex items-center justify-center transition-colors border border-slate-700 group-hover:border-gold"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-slate-300 group-hover:text-white"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></div><span class="text-[10px] text-slate-500 group-hover:text-gold font-medium">Arrow</span></button>
+            <label class="group flex flex-col items-center gap-1 w-full cursor-pointer"><div class="w-10 h-10 bg-slate-800 group-hover:bg-slate-700 rounded-xl flex items-center justify-center transition-colors border border-slate-700 group-hover:border-gold"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-slate-300 group-hover:text-white"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg></div><span class="text-[10px] text-slate-500 group-hover:text-gold font-medium">Image</span><input type="file" id="img-upload" accept="image/*" class="hidden" onchange="handleImageUpload(this)"></label>
+        </aside>
+
+        <main id="workspace" tabindex="0" class="flex-grow relative overflow-hidden flex flex-col items-center justify-center p-10 pb-32 focus:outline-none">
+            <div id="artboard" class="bg-white relative w-[800px] h-[600px] xl:w-[1000px] xl:h-[750px] flex-shrink-0 transition-all duration-200" onclick="deselectAll(event)"></div>
+            <div id="slide-strip-container" class="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-slate-900/90 border border-slate-700 rounded-2xl p-2 flex flex-col items-center shadow-2xl z-50 w-auto max-w-[90%]">
+                <div id="slide-strip" class="flex gap-2 overflow-x-auto p-2 mb-2 max-w-[600px] scrollbar-thin scrollbar-thumb-gold scrollbar-track-transparent" style="min-height: 70px;"></div>
+                <div class="flex items-center gap-4 px-4">
+                    <button onclick="changeSlide(-1)" class="text-slate-400 hover:text-white hover:bg-slate-800 p-1 rounded-full transition-colors" title="Previous"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+                    <div class="text-xs font-mono font-bold text-gold"><span id="slide-indicator">1 / 1</span></div>
+                    <button onclick="changeSlide(1)" class="text-slate-400 hover:text-white hover:bg-slate-800 p-1 rounded-full transition-colors" title="Next"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
+                    <div class="w-px h-3 bg-slate-700 edit-control"></div>
+                    <button onclick="openDeleteModal()" class="edit-control text-slate-400 hover:text-red-400 hover:bg-slate-800 p-1 rounded-full transition-colors" title="Delete Slide"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+                    <button onclick="addNewSlide()" class="edit-control text-slate-400 hover:text-green-400 hover:bg-slate-800 p-1 rounded-full transition-colors" title="Add Slide"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
+                    <div class="w-px h-3 bg-slate-700"></div>
+                    <button id="btn-scroll-nav" onclick="toggleScrollNav()" class="text-slate-500 hover:text-white p-1 rounded-full transition-colors relative" title="Enable Scroll Navigation"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="7" ry="7"></rect><line x1="12" y1="6" x2="12" y2="10"></line></svg><div id="scroll-nav-indicator" class="absolute top-0 right-0 w-2 h-2 bg-green-500 rounded-full border border-slate-900 hidden"></div></button>
+                </div>
+            </div>
+        </main>
+
+        <aside id="properties-panel" class="w-72 bg-slate-900 border-l border-slate-800 flex flex-col z-40">
+            <!-- Tabs -->
+            <div class="flex border-b border-slate-800">
+                <button onclick="switchTab('props')" id="tab-props" class="tab-btn active flex-1 py-3 text-xs font-bold uppercase tracking-wider text-slate-400 hover:text-white border-b-2 border-transparent transition-colors">Properties</button>
+                <button onclick="switchTab('anim')" id="tab-anim" class="tab-btn flex-1 py-3 text-xs font-bold uppercase tracking-wider text-slate-400 hover:text-white border-b-2 border-transparent transition-colors">Animate</button>
+                <button onclick="switchTab('layers')" id="tab-layers" class="tab-btn flex-1 py-3 text-xs font-bold uppercase tracking-wider text-slate-400 hover:text-white border-b-2 border-transparent transition-colors">Layers</button>
+            </div>
+            
+            <!-- Properties Content -->
+            <div id="content-props" class="flex-grow flex flex-col p-4 gap-6 overflow-y-auto">
+                <div id="prop-none" class="text-center text-slate-500 text-sm mt-10 hidden">Select an element.<br><br><div class="text-xs opacity-50">Click 'Bg' for canvas.</div></div>
+                <div id="prop-bg" class="space-y-6">
+                    <p class="text-xs text-gold font-bold uppercase">Background</p>
+                    <div class="space-y-2"><label class="text-xs text-slate-400">Themes</label><div class="grid grid-cols-3 gap-2"><button onclick="setTheme('white')" class="h-8 rounded border border-slate-600 bg-white hover:border-gold"></button><button onclick="setTheme('black')" class="h-8 rounded border border-slate-600 bg-black hover:border-gold"></button><button onclick="setTheme('gold')" class="h-8 rounded border border-slate-600 bg-gradient-to-br from-yellow-400 to-yellow-600 hover:border-white"></button><button onclick="setTheme('midnight')" class="h-8 rounded border border-slate-600 bg-gradient-to-br from-slate-800 to-black hover:border-gold"></button><button onclick="setTheme('royal')" class="h-8 rounded border border-slate-600 bg-gradient-to-br from-blue-900 to-purple-900 hover:border-gold"></button><button onclick="setTheme('sunrise')" class="h-8 rounded border border-slate-600 bg-gradient-to-br from-orange-400 to-pink-500 hover:border-gold"></button></div></div>
+                    <div class="flex items-center justify-between bg-slate-800 p-2 rounded-lg"><span class="text-sm text-slate-300">Color</span><input type="color" id="bg-color" value="#ffffff"></div>
+                    <div class="space-y-1"><label class="text-xs text-slate-400">Image</label><label class="block w-full bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs text-center py-2 rounded cursor-pointer border border-dashed border-slate-600">Upload<input type="file" accept="image/*" class="hidden" onchange="handleBgUpload(this)"></label><button onclick="clearBgImage()" class="text-[10px] text-red-400 hover:text-red-300 underline w-full text-right">Remove</button></div>
+                </div>
+                <div id="prop-element" class="space-y-4 hidden">
+                    <p class="text-xs text-gold font-bold uppercase mb-2">Edit Selected</p>
+                    
+                    <div class="space-y-2 border-b border-slate-800 pb-4 mb-4">
+                        <p class="text-[10px] text-slate-500 uppercase font-bold">Interaction</p>
+                        <div class="space-y-1">
+                            <label class="text-xs text-slate-400">Link URL</label>
+                            <input type="text" id="prop-link" placeholder="https://..." class="input-dark w-full p-2 rounded text-xs bg-slate-800 text-white border border-slate-700">
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2 pt-2 border-t border-slate-800">
+                        <div class="flex justify-between items-center">
+                            <label class="text-[10px] text-slate-500 uppercase font-bold">Animations</label>
+                        </div>
+                        
+                        <!-- List of animations on element -->
+                        <div id="prop-anim-list" class="space-y-1">
+                            <!-- Injected JS -->
+                        </div>
+
+                        <!-- Add Animation Controls -->
+                        <div class="flex gap-1 mt-2">
+                            <select id="new-anim-type" class="w-full bg-slate-800 text-xs text-white border border-slate-700 rounded p-1">
+                                <option value="anim-fade">Fade In</option>
+                                <option value="anim-fade-out">Fade Out</option>
+                                <option value="anim-slide">Slide Up</option>
+                                <option value="anim-zoom">Zoom In</option>
+                                <option value="anim-zoom-out">Zoom Out</option>
+                                <option value="anim-bounce">Bounce</option>
+                                <option value="anim-spin">Spin</option>
+                                <option value="anim-appear">Appear</option>
+                                <option value="anim-disappear">Disappear</option>
+                            </select>
+                            <select id="new-anim-trigger" class="w-20 bg-slate-800 text-xs text-white border border-slate-700 rounded p-1">
+                                <option value="click">Click</option>
+                                <option value="load">Load</option>
+                            </select>
+                        </div>
+                        <button onclick="addCurrentElementAnimation()" class="w-full bg-slate-800 hover:bg-slate-700 text-gold text-xs py-1 rounded border border-slate-700 hover:border-gold transition-colors mt-1">+ Add Animation</button>
+                    </div>
+                    
+                    <div id="group-text-content" class="space-y-1 hidden">
+                        <label class="text-xs text-slate-400">Text</label>
+                        <textarea id="prop-text" rows="2" class="input-dark w-full p-2 rounded text-sm bg-slate-800 text-white border border-slate-700"></textarea>
+                        <div class="flex gap-2 mt-2">
+                             <button onclick="toggleBold()" id="btn-bold" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white py-1 rounded text-xs border border-slate-600 font-bold">B</button>
+                             <button onclick="toggleUnderline()" id="btn-underline" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white py-1 rounded text-xs border border-slate-600 font-bold underline">U</button>
+                        </div>
+                    </div>
+                    
+                    <div id="group-font-family" class="space-y-1 hidden"><label class="text-xs text-slate-400">Font</label><select id="prop-font" class="input-dark w-full p-2 rounded text-xs bg-slate-800 text-white border border-slate-700"><option value="Inter">Inter</option><option value="Playfair Display">Playfair</option><option value="Pacifico">Pacifico</option><option value="Arial">Arial</option><option value="Times New Roman">Times</option><option value="Roboto Slab">Roboto</option><option value="Montserrat">Montserrat</option><option value="Open Sans">Open Sans</option><option value="Lato">Lato</option><option value="Poppins">Poppins</option><option value="Merriweather">Merriweather</option><option value="Oswald">Oswald</option><option value="Raleway">Raleway</option></select></div>
+                    <div class="flex items-center justify-between bg-slate-800 p-2 rounded-lg"><span class="text-sm text-slate-300">Color</span><input type="color" id="prop-color"></div>
+                    
+                    <div id="group-font-size" class="space-y-1 hidden">
+                        <label class="text-xs text-slate-400">Font Size</label>
+                        <div class="flex gap-2">
+                             <input type="number" id="prop-size-num" class="w-16 bg-slate-800 text-white text-xs border border-slate-700 rounded px-2 py-1 text-center" min="10" max="200">
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-1">
+                        <label class="text-xs text-slate-400">Rotation</label>
+                        <div class="flex gap-2">
+                            <input type="number" id="prop-rotation-num" class="w-16 bg-slate-800 text-white text-xs border border-slate-700 rounded px-2 py-1 text-center" min="0" max="360">
+                        </div>
+                    </div>
+                    <div class="space-y-1"><label class="text-xs text-slate-400">Opacity</label><input type="range" id="prop-opacity" min="0" max="100" value="100" class="w-full accent-gold"></div>
+                </div>
+            </div>
+            
+            <!-- Animations Panel -->
+            <div id="content-anim" class="flex-grow flex flex-col hidden overflow-y-auto bg-slate-900 p-4">
+                <p class="text-xs text-slate-500 uppercase font-bold mb-3">Timeline</p>
+                <div id="anim-list" class="space-y-2">
+                    <!-- Dynamic Animation Items -->
+                </div>
+                <div id="no-anim-msg" class="text-center text-xs text-slate-500 mt-10">No animations on this slide.</div>
+            </div>
+
+            <!-- Layers Panel -->
+            <div id="content-layers" class="flex-grow flex flex-col hidden overflow-y-auto bg-slate-900"><div id="layers-list" class="flex-col"></div><div class="p-4 text-center text-xs text-slate-500" id="no-layers-msg">No layers.</div></div>
+            <div id="layer-actions" class="p-4 border-t border-slate-800 hidden"><div class="flex gap-2 mb-2"><button onclick="moveLayer('up')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white py-2 rounded text-xs">Fwd</button><button onclick="moveLayer('down')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white py-2 rounded text-xs">Back</button></div><button onclick="deleteSelected()" class="w-full bg-red-900/50 hover:bg-red-900 text-red-200 py-2 rounded text-xs transition-colors border border-red-900">Delete Element</button></div>
+        </aside>
+    </div>
+
+    <!-- Modals -->
+    <div id="cipher-modal" class="modal-overlay"><div class="bg-slate-900 border border-gold p-6 rounded-lg w-96 shadow-2xl"><h3 class="text-gold font-bold text-lg mb-2" id="modal-title">Project Cipher</h3><p class="text-xs text-slate-400 mb-4" id="modal-desc">Copy code.</p><textarea id="modal-input" rows="6" class="w-full bg-slate-800 text-xs text-green-400 font-mono p-2 rounded border border-slate-700 focus:border-gold outline-none"></textarea>
+    
+    <div class="flex gap-2 mt-4"><button onclick="closeModal()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-2 rounded text-xs">Close</button><button id="modal-action-btn" class="flex-1 bg-gold hover:opacity-90 text-white font-bold py-2 rounded text-xs">Copy</button></div><div id="modal-compress-container" class="mt-4 pt-4 border-t border-slate-800 text-center"><button onclick="forceCompressAllImages()" class="text-xs text-purple-400 hover:text-purple-300 font-bold border border-purple-500 rounded px-4 py-2 w-full mb-2">Compress All Images (Fix Lag)</button></div><div id="modal-footer-extra" class="text-center hidden"><button onclick="clearLocalData()" class="text-xs text-red-500 hover:text-red-400 underline">Clear Local Data & Reset</button></div></div></div>
+    
+    <!-- Reuse Delete Modal for both slides and projects safely -->
+    <div id="delete-modal" class="modal-overlay"><div class="bg-slate-900 border border-red-500 p-6 rounded-lg w-80 shadow-2xl"><h3 class="text-red-500 font-bold text-lg mb-2" id="delete-modal-title">Delete Action</h3><p class="text-xs text-slate-400 mb-4" id="delete-modal-msg">Confirm deletion?</p><div class="flex gap-2 mt-4"><button onclick="closeDeleteModal()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-2 rounded text-xs">Cancel</button><button id="delete-modal-confirm-btn" onclick="confirmDeleteSlide()" class="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-2 rounded text-xs">Delete</button></div></div></div>
+    
+    <!-- AI Modal -->
+    <div id="ai-modal" class="modal-overlay"><div class="bg-slate-900 border border-purple-500 p-6 rounded-lg w-96 shadow-2xl relative overflow-hidden"><h3 class="text-purple-400 font-bold text-lg mb-1 flex items-center gap-2">Magic Studio</h3><p class="text-xs text-slate-400 mb-4">Generate content with Puter AI</p><div class="space-y-3"><textarea id="ai-prompt" rows="3" class="w-full bg-slate-800 text-sm text-white p-3 rounded border border-slate-700 focus:border-purple-500 outline-none" placeholder="Describe what you want..."></textarea><div class="flex gap-2"><button onclick="generateAI('text')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white py-2 rounded text-xs border border-slate-600">Generate Text</button><button onclick="generateAI('image')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white py-2 rounded text-xs border border-slate-600">Generate Image</button></div></div><div class="flex gap-2 mt-4 border-t border-slate-800 pt-4"><button onclick="closeAiModal()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-2 rounded text-xs">Close</button></div><div id="ai-loading" class="absolute inset-0 bg-slate-900/90 hidden flex-col items-center justify-center z-50"><div class="ai-loader mb-2"></div><p class="text-xs text-purple-400 animate-pulse" id="ai-loading-text">Creating Magic...</p></div></div></div>
+
+    <!-- Publish Modal -->
+    <div id="publish-modal" class="modal-overlay">
+        <div class="bg-slate-900 border border-emerald-500 p-6 rounded-lg w-96 shadow-2xl relative">
+            <h3 class="text-emerald-400 font-bold text-lg mb-2">Publish to Web</h3>
+            <p class="text-xs text-slate-400 mb-4">Choose a custom name for your live presentation site.</p>
+            <div class="mb-4 flex items-center shadow-sm rounded overflow-hidden border border-slate-700">
+                <input type="text" id="publish-alias" placeholder="my-slides" class="flex-1 px-3 py-2 bg-slate-800 text-white text-sm outline-none focus:ring-1 focus:ring-emerald-500 border-r border-slate-700">
+                <span class="px-3 py-2 bg-slate-700 font-mono text-xs text-slate-300">lstudio.puter.site</span>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="closePublishModal()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-2 rounded text-xs transition-colors">Cancel</button>
+                <button onclick="confirmPublish()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded text-xs transition-colors">Publish</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Extensions Modal -->
+    <div id="ext-modal" class="modal-overlay">
+        <div class="bg-slate-900 border border-indigo-500 p-6 rounded-lg w-[500px] shadow-2xl relative overflow-hidden flex flex-col max-h-[80vh]">
+            <h3 class="text-indigo-400 font-bold text-lg mb-1">Extensions Library</h3>
+            <p class="text-xs text-slate-400 mb-4">Open external tools in floating windows (Max 3). Note: Some external websites block iframe embedding for security.</p>
+            <div id="ext-list" class="flex flex-col gap-2 overflow-y-auto pr-2 flex-grow mb-4">
+                <!-- Extensions will be injected here -->
+            </div>
+            <div class="flex gap-2 border-t border-slate-800 pt-4">
+                <button onclick="closeExtModal()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-2 rounded text-xs">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-8 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full text-white text-sm font-medium shadow-lg transition-all duration-300 opacity-0 translate-y-4 z-[2000] pointer-events-none bg-slate-800 border-l-4 border-gold"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const apiKey = "";
+            const artboard = document.getElementById('artboard');
+            const slideIndicator = document.getElementById('slide-indicator');
+            const layersList = document.getElementById('layers-list');
+            const animList = document.getElementById('anim-list');
+            const noLayersMsg = document.getElementById('no-layers-msg');
+            const noAnimMsg = document.getElementById('no-anim-msg');
+            const slideStrip = document.getElementById('slide-strip');
+            const workspace = document.getElementById('workspace');
+            const propAnimList = document.getElementById('prop-anim-list');
+
+            // Workspace state lists
+            let slides = [];
+            let currentSlideIndex = 0;
+            let isPresenting = false;
+            let isReadOnly = false;
+            let isScrollNavEnabled = false;
+            let scrollDebounce = false;
+            let pendingAnimations = []; 
+            let historyStack = [];
+            let historyIndex = -1;
+            let studioClipboard = null;
+            let pasteMode = 'auto'; // 'auto', 'web', 'studio'
+            let isResizing = false;
+            let startX, startY, startWidth, startHeight;
+
+            // Project manager variables
+            let projects = [];
+            let currentProjectId = null;
+            let projectToDeleteId = null; // Track project target for custom delete modal safely
+
+            // Initialize multi-project manager system
+            function initProjectSystem() {
+                try {
+                    const storedProjects = localStorage.getItem('lux_studio_projects');
+                    if (storedProjects) {
+                        projects = JSON.parse(storedProjects);
+                    }
+                } catch(e) {
+                    console.warn("Could not read projects list.");
+                }
+                
+                // If projects list is empty, attempt to migrate single legacy project structure
+                if (!projects || projects.length === 0) {
+                    projects = [];
+                    let migratedSlides = [{ html: '', bg: '#ffffff' }];
+                    try {
+                        const legacy = localStorage.getItem('lux_studio_slides');
+                        if (legacy) {
+                            migratedSlides = JSON.parse(legacy);
+                        }
+                    } catch(e) {}
+                    
+                    const defaultProj = {
+                        id: 'proj_' + Math.random().toString(36).substr(2, 9),
+                        title: 'My Presentation',
+                        slides: migratedSlides,
+                        lastModified: Date.now()
+                    };
+                    projects.push(defaultProj);
+                    saveProjectsToLocalStorage();
+                }
+                
+                // Sort by last modified and open the most recent project
+                projects.sort((a, b) => b.lastModified - a.lastModified);
+                currentProjectId = projects[0].id;
+                slides = projects[0].slides;
+                currentSlideIndex = 0;
+            }
+
+            function saveProjectsToLocalStorage() {
+                try {
+                    localStorage.setItem('lux_studio_projects', JSON.stringify(projects));
+                } catch(e) {
+                    console.error("Local Storage projects write failed", e);
+                }
+            }
+
+            function renderRecentProjects() {
+                const grid = document.getElementById('recent-projects-grid');
+                if (!grid) return;
+                grid.innerHTML = '';
+                
+                projects.forEach(proj => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-slate-800 border border-slate-700/60 p-4 rounded-xl flex flex-col gap-3 hover:border-gold transition-all relative group cursor-pointer shadow-md hover:shadow-xl hover:translate-y-[-2px] duration-200';
+                    card.onclick = (e) => {
+                        if (!e.target.closest('button')) {
+                            openProject(proj.id);
+                        }
+                    };
+                    
+                    const slideCount = proj.slides ? proj.slides.length : 1;
+                    const formattedDate = new Date(proj.lastModified).toLocaleDateString(undefined, {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric'
+                    });
+                    
+                    card.innerHTML = `
+                        <div class="h-24 bg-slate-900 rounded-lg flex flex-col items-center justify-center p-3 text-slate-500 font-serif border border-slate-700/30 overflow-hidden relative group-hover:bg-slate-950 transition-colors">
+                            <svg class="text-gold opacity-40 mb-1" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                            <span class="text-[10px] uppercase tracking-widest text-slate-400 font-sans font-bold">${slideCount} Slide${slideCount === 1 ? '' : 's'}</span>
+                        </div>
+                        <div class="flex flex-col flex-grow">
+                            <h4 class="text-white font-bold text-sm truncate pr-6 group-hover:text-gold transition-colors" title="${proj.title}">${proj.title}</h4>
+                            <span class="text-[10px] text-slate-500 mt-0.5">Edited ${formattedDate}</span>
+                        </div>
+                        <button onclick="deleteProject('${proj.id}', event)" class="absolute bottom-4 right-4 p-1.5 text-slate-500 hover:text-red-400 hover:bg-slate-700/50 rounded-lg opacity-0 group-hover:opacity-100 transition-all cursor-pointer shadow" title="Delete presentation">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
+                    `;
+                    grid.appendChild(card);
+                });
+            }
+
+            function openProject(id) {
+                const proj = projects.find(p => p.id === id);
+                if (!proj) return;
+                currentProjectId = id;
+                slides = proj.slides;
+                currentSlideIndex = 0;
+                
+                // Bind header title input
+                const titleInput = document.getElementById('project-title');
+                if (titleInput) titleInput.value = proj.title;
+                
+                // Hide dashboard screen
+                document.getElementById('dashboard-screen').style.display = 'none';
+                
+                // Reset and clear the undo/redo history stack for the newly opened project
+                historyStack = [];
+                historyIndex = -1;
+                
+                loadSlide(0);
+                
+                // Commit initial slide state to undo stack
+                commitState();
+                
+                selectElement(null);
+                showPanel('bg');
+            }
+
+            window.createNewProject = function() {
+                const newProj = {
+                    id: 'proj_' + Math.random().toString(36).substr(2, 9),
+                    title: 'Untitled Presentation',
+                    slides: [{ html: '', bg: '#ffffff' }],
+                    lastModified: Date.now()
+                };
+                projects.unshift(newProj);
+                saveProjectsToLocalStorage();
+                renderRecentProjects();
+                openProject(newProj.id);
+            };
+
+            // Custom deleteProject logic utilizing confirm modal dynamically
+            window.deleteProject = function(id, event) {
+                event.stopPropagation();
+                if (projects.length <= 1) {
+                    showToast("You must keep at least one presentation in your studio.", true);
+                    return;
+                }
+                projectToDeleteId = id;
+                const proj = projects.find(p => p.id === id);
+                const title = proj ? proj.title : "this presentation";
+                
+                // Update delete-modal text context dynamically for project
+                document.getElementById('delete-modal-title').innerText = "Delete Presentation";
+                document.getElementById('delete-modal-msg').innerText = `Are you sure you want to delete "${title}"? This action cannot be undone.`;
+                
+                const confirmBtn = document.getElementById('delete-modal-confirm-btn');
+                if (confirmBtn) {
+                    confirmBtn.setAttribute('onclick', 'confirmDeleteProject()');
+                }
+                document.getElementById('delete-modal').classList.add('active');
+            };
+
+            window.confirmDeleteProject = function() {
+                if (projectToDeleteId) {
+                    projects = projects.filter(p => p.id !== projectToDeleteId);
+                    saveProjectsToLocalStorage();
+                    renderRecentProjects();
+                    showToast("Presentation deleted successfully.");
+                    
+                    if (currentProjectId === projectToDeleteId) {
+                        openProject(projects[0].id);
+                    }
+                    projectToDeleteId = null;
+                }
+                closeDeleteModal();
+            };
+
+            window.renameActiveProject = function(newTitle) {
+                const proj = projects.find(p => p.id === currentProjectId);
+                if (proj) {
+                    proj.title = newTitle.trim() || 'Untitled Presentation';
+                    proj.lastModified = Date.now();
+                    saveProjectsToLocalStorage();
+                }
+            };
+
+            window.showDashboard = function() {
+                saveCurrentSlideState();
+                renderRecentProjects();
+                document.getElementById('dashboard-screen').style.display = 'flex';
+            };
+
+            // Initialize projects state
+            initProjectSystem();
+            renderRecentProjects();
+
+            // Commit primary slide loading loops
+            let selectedEl = null;
+            let isDragging = false;
+            let dragOffsetX = 0;
+            let dragOffsetY = 0;
+            const panels = { none: document.getElementById('prop-none'), bg: document.getElementById('prop-bg'), el: document.getElementById('prop-element'), actions: document.getElementById('layer-actions') };
+            const tabs = { 
+                props: { btn: document.getElementById('tab-props'), content: document.getElementById('content-props') }, 
+                layers: { btn: document.getElementById('tab-layers'), content: document.getElementById('content-layers') },
+                anim: { btn: document.getElementById('tab-anim'), content: document.getElementById('content-anim') }
+            };
+            const props = { 
+                textGroup: document.getElementById('group-text-content'), 
+                fontGroup: document.getElementById('group-font-size'), 
+                fontFamilyGroup: document.getElementById('group-font-family'), 
+                dimsGroup: document.getElementById('group-dims'), 
+                labelDims: document.getElementById('label-dims'), 
+                textInput: document.getElementById('prop-text'), 
+                colorInput: document.getElementById('prop-color'), 
+                fontInput: document.getElementById('prop-font'), 
+                sizeNumInput: document.getElementById('prop-size-num'), 
+                rotationNumInput: document.getElementById('prop-rotation-num'), 
+                opacityInput: document.getElementById('prop-opacity'), 
+                bgColorInput: document.getElementById('bg-color'),
+                linkInput: document.getElementById('prop-link'),
+                boldBtn: document.getElementById('btn-bold'),
+                underlineBtn: document.getElementById('btn-underline')
+            };
+            const modal = document.getElementById('cipher-modal'); const modalTitle = document.getElementById('modal-title'); const modalDesc = document.getElementById('modal-desc'); const modalInput = document.getElementById('modal-input'); const modalActionBtn = document.getElementById('modal-action-btn'); const modalFooter = document.getElementById('modal-footer-extra'); const modalImportSection = document.getElementById('modal-import-section');
+            const deleteModal = document.getElementById('delete-modal'); const deleteModalMsg = document.getElementById('delete-modal-msg');
+            const aiModal = document.getElementById('ai-modal'); const aiPrompt = document.getElementById('ai-prompt'); const aiLoading = document.getElementById('ai-loading');
+            const extModal = document.getElementById('ext-modal');
+            const publishModal = document.getElementById('publish-modal');
+            const toast = document.getElementById('toast');
+
+            function showToast(msg, isError = false, isHTML = false, duration = 3000) {
+                if (!toast) return;
+                if (isHTML) {
+                    toast.innerHTML = msg;
+                    toast.classList.remove('pointer-events-none');
+                    toast.classList.add('pointer-events-auto');
+                } else {
+                    toast.innerText = msg;
+                    toast.classList.add('pointer-events-none');
+                    toast.classList.remove('pointer-events-auto');
+                }
+                toast.style.borderLeftColor = isError ? '#ef4444' : '#fbbf24';
+                toast.classList.remove('opacity-0', 'translate-y-4');
+                setTimeout(() => {
+                    toast.classList.add('opacity-0', 'translate-y-4');
+                    if (isHTML) {
+                        setTimeout(() => {
+                            toast.classList.add('pointer-events-none');
+                            toast.classList.remove('pointer-events-auto');
+                        }, 300);
+                    }
+                }, duration);
+            }
+
+            // --- EXTENSIONS SYSTEM ---
+            const availableExtensions = [
+                { id: 'luxplayer', name: 'LUXPlayer Embed Tool', type: 'url', url: 'https://player.luxworldplus.com', desc: 'Premium Privacy YouTube Player' },
+                { id: 'vdraw', name: 'VDraw AI Editor', url: 'https://vdraw.ai/ai-image-editor', desc: 'AI Image Editing tool' },
+                { id: 'photoroom', name: 'Photoroom Bg Remover', url: 'https://www.photoroom.com/tools/background-remover', desc: 'Remove backgrounds instantly' },
+                { id: 'coolors', name: 'Coolors Palettes', url: 'https://coolors.co/palettes/trending', desc: 'Browse trending color palettes' },
+                { id: 'lucide', name: 'Lucide Icons', url: 'https://lucide.dev/icons', desc: 'Beautiful open-source SVG icons' },
+                { id: 'cssgradient', name: 'CSS Gradient', url: 'https://cssgradient.io/', desc: 'Create gradient backgrounds visually' },
+                { id: 'animista', name: 'Animista', url: 'https://animista.net/', desc: 'CSS animation builder' }
+            ];
+            
+            let activeExtensions = [];
+            let extZIndex = 2000;
+
+            window.openExtModal = function() { 
+                extModal.classList.add('active'); 
+                const list = document.getElementById('ext-list');
+                list.innerHTML = '';
+                availableExtensions.forEach(ext => {
+                    const isOpen = activeExtensions.find(e => e.id === ext.id);
+                    const item = document.createElement('div');
+                    item.className = 'bg-slate-800 p-3 rounded border border-slate-700 flex justify-between items-center';
+                    item.innerHTML = `
+                        <div class="flex flex-col">
+                            <span class="text-sm text-white font-bold">${ext.name}</span>
+                            <span class="text-[10px] text-slate-400">${ext.desc}</span>
+                        </div>
+                        <button onclick="toggleExtension('${ext.id}')" class="px-3 py-1.5 rounded text-xs font-bold transition-colors ${isOpen ? 'bg-red-900/50 text-red-400 border border-red-900 hover:bg-red-900' : 'bg-indigo-600 text-white hover:bg-indigo-500'}">
+                            ${isOpen ? 'Close' : 'Open'}
+                        </button>
+                    `;
+                    list.appendChild(item);
+                });
+            };
+            window.closeExtModal = function() { extModal.classList.remove('active'); };
+
+            window.toggleExtension = function(id) {
+                if (activeExtensions.find(e => e.id === id)) {
+                    closeExtensionWindow(id);
+                } else {
+                    if (activeExtensions.length >= 3) {
+                        showToast("You can only have up to 3 extensions open at once.", true);
+                        return;
+                    }
+                    openExtensionWindow(id);
+                }
+                openExtModal(); // Refresh UI list
+            };
+
+            function openExtensionWindow(id) {
+                const ext = availableExtensions.find(e => e.id === id);
+                if(!ext) return;
+                activeExtensions.push(ext);
+
+                const win = document.createElement('div');
+                win.id = 'ext-win-' + id;
+                win.className = 'absolute flex flex-col bg-slate-900 border border-indigo-500 rounded-lg shadow-2xl overflow-hidden';
+                win.style.width = '450px';
+                win.style.height = '600px';
+                win.style.left = (100 + activeExtensions.length * 40) + 'px';
+                win.style.top = (80 + activeExtensions.length * 40) + 'px';
+                win.style.zIndex = ++extZIndex;
+                
+                win.style.resize = 'both';
+                win.style.minWidth = '300px';
+                win.style.minHeight = '200px';
+
+                const header = document.createElement('div');
+                header.className = 'bg-slate-800 p-2 flex justify-between items-center cursor-move border-b border-slate-700 select-none';
+                header.innerHTML = `
+                    <span class="text-xs text-indigo-400 font-bold px-2">${ext.name}</span>
+                    <button onclick="closeExtensionWindow('${id}')" class="text-slate-400 hover:text-red-400 p-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                `;
+
+                const iframe = document.createElement('iframe');
+                if (ext.type === 'srcdoc') {
+                    iframe.srcdoc = ext.content;
+                } else {
+                    iframe.src = ext.url;
+                }
+                iframe.className = 'flex-grow w-full bg-white';
+                iframe.style.border = 'none';
+
+                let isDragging = false, startX, startY, initialLeft, initialTop;
+                
+                header.addEventListener('mousedown', (e) => {
+                    if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+                    isDragging = true;
+                    win.style.zIndex = ++extZIndex;
+                    startX = e.clientX; startY = e.clientY;
+                    initialLeft = parseInt(win.style.left); initialTop = parseInt(win.style.top);
+                    iframe.style.pointerEvents = 'none';
+                    document.addEventListener('mousemove', onDragExt);
+                    document.addEventListener('mouseup', stopDragExt);
+                });
+
+                function onDragExt(e) {
+                    if(!isDragging) return;
+                    win.style.left = (initialLeft + e.clientX - startX) + 'px';
+                    win.style.top = (initialTop + e.clientY - startY) + 'px';
+                }
+
+                function stopDragExt() {
+                    isDragging = false;
+                    iframe.style.pointerEvents = 'auto';
+                    document.removeEventListener('mousemove', onDragExt);
+                    document.removeEventListener('mouseup', stopDragExt);
+                }
+
+                win.addEventListener('mousedown', () => { win.style.zIndex = ++extZIndex; });
+
+                win.appendChild(header);
+                win.appendChild(iframe);
+                document.body.appendChild(win);
+            }
+
+            window.closeExtensionWindow = function(id) {
+                const win = document.getElementById('ext-win-' + id);
+                if (win) win.remove();
+                activeExtensions = activeExtensions.filter(e => e.id !== id);
+                if(extModal.classList.contains('active')) openExtModal();
+            };
+
+            window.switchTab = function(tabName) { 
+                Object.values(tabs).forEach(t => { 
+                    if(t.btn) {
+                        t.btn.classList.remove('active', 'text-white', 'border-gold'); 
+                        t.btn.classList.add('text-slate-400', 'border-transparent');
+                    }
+                    if(t.content) t.content.classList.add('hidden'); 
+                }); 
+                if(tabs[tabName]) {
+                    tabs[tabName].btn.classList.add('active', 'text-white', 'border-gold'); 
+                    tabs[tabName].btn.classList.remove('text-slate-400', 'border-transparent');
+                    tabs[tabName].content.classList.remove('hidden'); 
+                }
+                if (tabName === 'layers') renderLayers();
+                if (tabName === 'anim') renderAnimationsList();
+            };
+            
+            function optimizeImage(dataUrl, maxWidth = 500, quality = 0.5) { 
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.crossOrigin = 'Anonymous';
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; }
+                        canvas.width = width; canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        resolve(canvas.toDataURL('image/jpeg', quality));
+                    };
+                    img.onerror = reject;
+                    img.src = dataUrl;
+                });
+            }
+
+            window.forceCompressAllImages = async function() {
+                const btn = document.querySelector('#modal-compress-container button');
+                const origText = btn.innerText;
+                btn.innerText = "Compressing... (Please Wait)";
+                btn.disabled = true;
+                const imgs = artboard.querySelectorAll('img');
+                for (let img of imgs) { if (img.src && img.src.startsWith('data:image')) { try { img.src = await optimizeImage(img.src); } catch(e){} } }
+                if (artboard.style.backgroundImage && artboard.style.backgroundImage.startsWith('url("data:image')) {
+                     let bgSrc = artboard.style.backgroundImage.slice(5, -2);
+                     try { let optBg = await optimizeImage(bgSrc); artboard.style.backgroundImage = `url('${optBg}')`; } catch(e){}
+                }
+                saveCurrentSlideState();
+                btn.innerText = "Done! Try Saving Now.";
+                setTimeout(() => { btn.innerText = origText; btn.disabled = false; }, 2000);
+            };
+
+            window.clearLocalData = function() {
+                // Customized dynamic confirm block replacing native confirm()
+                document.getElementById('delete-modal-title').innerText = "Clear All Local Data";
+                document.getElementById('delete-modal-msg').innerText = "This will delete all presentations from browser storage. Are you sure?";
+                const confirmBtn = document.getElementById('delete-modal-confirm-btn');
+                if (confirmBtn) {
+                    confirmBtn.setAttribute('onclick', 'confirmClearLocalData()');
+                }
+                document.getElementById('delete-modal').classList.add('active');
+            };
+
+            window.confirmClearLocalData = function() {
+                localStorage.removeItem('lux_studio_projects');
+                localStorage.removeItem('lux_studio_slides');
+                location.reload();
+            };
+
+            function commitState() { if (historyIndex < historyStack.length - 1) { historyStack = historyStack.slice(0, historyIndex + 1); } const state = { slides: JSON.parse(JSON.stringify(slides)), currentSlideIndex: currentSlideIndex }; historyStack.push(state); historyIndex++; if (historyStack.length > 50) { historyStack.shift(); historyIndex--; } }
+            window.undo = function() { if (historyIndex > 0) { historyIndex--; const state = historyStack[historyIndex]; slides = JSON.parse(JSON.stringify(state.slides)); currentSlideIndex = state.currentSlideIndex; loadSlide(currentSlideIndex); saveCurrentSlideState(false); } };
+            window.redo = function() { if (historyIndex < historyStack.length - 1) { historyIndex++; const state = historyStack[historyIndex]; slides = JSON.parse(JSON.stringify(state.slides)); currentSlideIndex = state.currentSlideIndex; loadSlide(currentSlideIndex); saveCurrentSlideState(false); } };
+            
+            window.setPasteMode = function(mode) {
+                pasteMode = mode;
+                document.getElementById('paste-mode-auto').className = 'px-3 py-1 text-[10px] rounded-full text-slate-400 hover:text-white transition-colors';
+                document.getElementById('paste-mode-web').className = 'px-3 py-1 text-[10px] rounded-full text-slate-400 hover:text-white transition-colors';
+                document.getElementById('paste-mode-studio').className = 'px-3 py-1 text-[10px] rounded-full text-slate-400 hover:text-white transition-colors';
+                const activeClass = 'px-3 py-1 text-[10px] rounded-full bg-slate-600 text-white font-bold transition-colors';
+                document.getElementById('paste-mode-' + mode).className = activeClass;
+            };
+
+            window.copyElement = function() { 
+                if (!selectedEl) return; 
+                const wrapper = selectedEl.querySelector('.anim-wrapper'); 
+                studioClipboard = { type: selectedEl.dataset.type, html: selectedEl.innerHTML, style: selectedEl.getAttribute('style'), dataset: { ...selectedEl.dataset }, wrapperStyle: wrapper ? wrapper.getAttribute('style') : '', wrapperClass: wrapper ? wrapper.className : 'anim-wrapper' }; 
+                try {
+                    const tempInput = document.createElement('input');
+                    tempInput.value = 'luxworld_internal_copy';
+                    document.body.appendChild(tempInput);
+                    tempInput.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(tempInput);
+                } catch(err) {}
+            };
+            window.cutElement = function() { window.copyElement(); window.deleteSelected(); };
+            window.pasteElement = function() { 
+                if (!studioClipboard) return; 
+                const el = document.createElement('div'); 
+                el.className = 'design-element'; 
+                el.setAttribute('style', studioClipboard.style); 
+                const currentLeft = parseInt(el.style.left || '0'); 
+                const currentTop = parseInt(el.style.top || '0'); 
+                el.style.left = (currentLeft + 20) + 'px'; 
+                el.style.top = (currentTop + 20) + 'px'; 
+                el.style.zIndex = artboard.children.length + 1; 
+                for (const key in studioClipboard.dataset) { el.dataset[key] = studioClipboard.dataset[key]; } 
+                el.innerHTML = studioClipboard.html; 
+                const handle = document.createElement('div'); 
+                handle.className = 'resize-handle'; 
+                el.appendChild(handle); 
+                handle.addEventListener('mousedown', initResize); 
+                const wrapper = el.querySelector('.anim-wrapper'); 
+                if(wrapper && studioClipboard.wrapperStyle) wrapper.setAttribute('style', studioClipboard.wrapperStyle); 
+                if(wrapper && studioClipboard.wrapperClass) wrapper.className = studioClipboard.wrapperClass; 
+                el.addEventListener('mousedown', startDrag); 
+                if (el.dataset.type === 'text') setupTextEditing(el); 
+                el.removeAttribute('data-animations'); 
+                artboard.appendChild(el); 
+                window.selectElement(el); 
+                renderLayers(); 
+                saveCurrentSlideState(); 
+            };
+            
+            document.addEventListener('paste', (e) => {
+                if (isPresenting || isReadOnly) return;
+                if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.isContentEditable) return;
+                
+                const clipboardItems = (e.clipboardData || e.originalEvent.clipboardData);
+                if (!clipboardItems) return;
+
+                if (pasteMode === 'studio') { e.preventDefault(); window.pasteElement(); return; }
+
+                const textData = clipboardItems.getData('text/plain');
+
+                if (pasteMode === 'auto' && textData === 'luxworld_internal_copy' && studioClipboard) {
+                    window.pasteElement();
+                    e.preventDefault();
+                    return;
+                }
+
+                let pastedImage = false;
+                const items = clipboardItems.items;
+                for (let index in items) {
+                    const item = items[index];
+                    if (item.kind === 'file' && item.type.startsWith('image/')) {
+                        const blob = item.getAsFile();
+                        const reader = new FileReader();
+                        reader.onload = async function(event) {
+                            let optimized = event.target.result;
+                            try { optimized = await optimizeImage(optimized); } catch(err) { console.warn("Paste compression failed"); }
+                            window.addElement('image', optimized);
+                        };
+                        reader.readAsDataURL(blob);
+                        pastedImage = true;
+                        e.preventDefault();
+                        break;
+                    }
+                }
+
+                if (!pastedImage && textData && textData !== 'luxworld_internal_copy') {
+                    window.addElement('text');
+                    setTimeout(() => {
+                        if (selectedEl && selectedEl.dataset.type === 'text') {
+                            const w = selectedEl.querySelector('.anim-wrapper');
+                            if (w) w.innerText = textData;
+                            saveCurrentSlideState();
+                        }
+                    }, 50);
+                    e.preventDefault();
+                } else if (!pastedImage && pasteMode === 'auto' && studioClipboard) {
+                    window.pasteElement();
+                    e.preventDefault();
+                }
+            });
+
+            document.addEventListener('keydown', (e) => { 
+                if (isPresenting) { 
+                    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); if(pendingAnimations.length > 0) { const anim = pendingAnimations.shift(); playAnimationStep(anim); } else { window.changeSlide(1); } } 
+                    if (e.key === 'ArrowLeft') window.changeSlide(-1); 
+                    if (e.key === 'Escape') window.togglePresentation(); 
+                    return; 
+                } 
+                if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.isContentEditable) return; 
+                const key = e.key.toLowerCase();
+                if (e.ctrlKey || e.metaKey) { 
+                    if (key === 'z') { e.preventDefault(); window.undo(); return;} 
+                    if (key === 'y') { e.preventDefault(); window.redo(); return;} 
+                    if (key === 'c') { e.preventDefault(); window.copyElement(); return;} 
+                    if (key === 'x') { e.preventDefault(); window.cutElement(); return;} 
+                    if (key === 'v') { 
+                        if (pasteMode === 'studio') {
+                            e.preventDefault();
+                            window.pasteElement();
+                            return;
+                        }
+                    } 
+                } 
+                if (e.key === 'Delete' || e.key === 'Backspace') { if (selectedEl) { e.preventDefault(); window.deleteSelected(); return;} }
+                if (selectedEl && !isPresenting) {
+                    const step = e.shiftKey ? 10 : 1;
+                    if (e.key === 'ArrowUp') { e.preventDefault(); selectedEl.style.top = (parseInt(selectedEl.style.top || 0) - step) + 'px'; updatePropertiesPanel(); saveCurrentSlideState(); }
+                    if (e.key === 'ArrowDown') { e.preventDefault(); selectedEl.style.top = (parseInt(selectedEl.style.top || 0) + step) + 'px'; updatePropertiesPanel(); saveCurrentSlideState(); }
+                    if (e.key === 'ArrowLeft') { e.preventDefault(); selectedEl.style.left = (parseInt(selectedEl.style.left || 0) - step) + 'px'; updatePropertiesPanel(); saveCurrentSlideState(); }
+                    if (e.key === 'ArrowRight') { e.preventDefault(); selectedEl.style.left = (parseInt(selectedEl.style.left || 0) + step) + 'px'; updatePropertiesPanel(); saveCurrentSlideState(); }
+                }
+            });
+
+            function updateSlideUI() { if(slideIndicator) slideIndicator.innerText = `${currentSlideIndex + 1} / ${slides.length}`; if (artboard.style.backgroundColor && props.bgColorInput) { props.bgColorInput.value = rgbToHex(artboard.style.backgroundColor); } renderSlideStrip(); }
+            function renderSlideStrip() { if(!slideStrip) return; slideStrip.innerHTML = ''; slides.forEach((slide, index) => { const thumb = document.createElement('div'); thumb.className = `w-16 h-12 bg-white border rounded cursor-pointer flex-shrink-0 overflow-hidden relative ${index === currentSlideIndex ? 'border-gold border-2' : 'border-slate-600'}`; thumb.style.background = slide.bg || '#ffffff'; const num = document.createElement('div'); num.className = 'absolute inset-0 flex items-center justify-center text-xs font-bold text-slate-900 opacity-50 pointer-events-none'; num.innerText = index + 1; thumb.appendChild(num); thumb.onclick = () => loadSlide(index); slideStrip.appendChild(thumb); }); }
+            
+            function saveCurrentSlideState(shouldCommit = true) { 
+                let tempSelected = selectedEl; 
+                if (selectedEl) selectedEl.classList.remove('selected'); 
+                const editables = artboard.querySelectorAll('[contenteditable="true"]'); 
+                editables.forEach(el => el.contentEditable = false); 
+                if(slides[currentSlideIndex]) { 
+                    slides[currentSlideIndex].html = artboard.innerHTML; 
+                    slides[currentSlideIndex].bg = artboard.style.background || artboard.style.backgroundColor || '#ffffff'; 
+                } 
+                if (tempSelected) tempSelected.classList.add('selected'); 
+                renderSlideStrip(); 
+
+                // Inject active project array state updates
+                const proj = projects.find(p => p.id === currentProjectId);
+                if (proj) {
+                    proj.slides = JSON.parse(JSON.stringify(slides));
+                    proj.lastModified = Date.now();
+                    saveProjectsToLocalStorage();
+                }
+
+                try { 
+                    localStorage.setItem('lux_studio_slides', JSON.stringify(slides)); 
+                } catch(e) { 
+                    console.warn("Local Storage Full."); 
+                } 
+                if(shouldCommit) commitState(); 
+            }
+
+            function safeClassAction(el, className, action) { if(!el || !className) return; const classes = className.split(/\s+/).filter(c => c.length > 0); classes.forEach(c => { try { el.classList[action](c); } catch(e) { console.warn('Invalid class:', c); } }); }
+
+            function playAnimationStep(anim) { 
+                const wrapper = anim.el.querySelector('.anim-wrapper'); if(!wrapper) return;
+                const isEntrance = ['anim-fade','anim-zoom','anim-slide','anim-bounce','anim-appear'].includes(anim.type);
+                wrapper.style.opacity = ''; safeClassAction(wrapper, anim.type, 'remove'); void wrapper.offsetWidth; safeClassAction(wrapper, anim.type, 'add');
+                if(isEntrance) wrapper.style.opacity = '1';
+            }
+            
+            function openLink(link) { if(!link) return; link = link.trim(); if(link.length === 0) return; try { if (!link.match(/^https?:\/\//i) && !link.match(/^mailto:/i) && !link.startsWith('/') && !link.startsWith('#')) { if(link.includes('.') && !link.includes(' ')) { link = 'https://' + link; } } window.open(link, '_blank'); } catch(e) { console.error("Link Error:", e); } }
+            function getAnimations(el) { try { return JSON.parse(el.dataset.animations || '[]'); } catch (e) { return []; } }
+            function setAnimations(el, anims) { el.dataset.animations = JSON.stringify(anims); }
+
+            window.addCurrentElementAnimation = function() {
+                if (!selectedEl) return;
+                const type = document.getElementById('new-anim-type').value; const trigger = document.getElementById('new-anim-trigger').value;
+                const allAnims = getAllSlideAnimations(); const maxOrder = allAnims.length > 0 ? Math.max(...allAnims.map(a => a.order)) : 0;
+                const anims = getAnimations(selectedEl);
+                anims.push({ id: Date.now().toString(36) + Math.random().toString(36).substr(2), type: type, trigger: trigger, order: maxOrder + 1 });
+                setAnimations(selectedEl, anims); saveCurrentSlideState(); updatePropertiesPanel(); renderAnimationsList();
+            };
+
+            window.removeAnimation = function(animId) { if (!selectedEl) return; let anims = getAnimations(selectedEl); anims = anims.filter(a => a.id !== animId); setAnimations(selectedEl, anims); saveCurrentSlideState(); updatePropertiesPanel(); renderAnimationsList(); };
+            function getAllSlideAnimations() { const elements = Array.from(artboard.querySelectorAll('.design-element')); let allAnims = []; elements.forEach(el => { const anims = getAnimations(el); anims.forEach(a => { allAnims.push({ ...a, el: el }); }); }); return allAnims.sort((a, b) => a.order - b.order); }
+            function renderAnimationsList() { if(!animList) return; animList.innerHTML = ''; const allAnims = getAllSlideAnimations(); if (allAnims.length === 0) { if(noAnimMsg) noAnimMsg.classList.remove('hidden'); } else { if(noAnimMsg) noAnimMsg.classList.add('hidden'); allAnims.forEach((anim, index) => { const item = document.createElement('div'); item.className = 'bg-slate-800 p-2 rounded flex items-center justify-between group border border-slate-700 hover:border-slate-500'; let name = anim.el.dataset.type; if (anim.el.dataset.type === 'text') { const wrap = anim.el.querySelector('.anim-wrapper'); name = wrap ? wrap.innerText.substring(0, 10) + '...' : 'Text'; } let typeName = anim.type.replace('anim-', '').toUpperCase(); item.innerHTML = `<div class="flex items-center gap-2 overflow-hidden"><span class="text-xs font-mono text-gold shrink-0">${index + 1}</span><div class="flex flex-col overflow-hidden"><span class="text-xs text-white truncate font-bold">${typeName}</span><span class="text-[9px] text-slate-400 truncate">${name}</span></div></div><div class="flex gap-1 shrink-0"><span class="text-[9px] bg-slate-700 px-1 rounded text-slate-300 flex items-center">${anim.trigger === 'load' ? 'Auto' : 'Click'}</span><div class="flex flex-col gap-0.5"><button onclick="swapGlobalOrder('${anim.id}', -1)" class="w-4 h-3 bg-slate-700 hover:bg-slate-600 flex items-center justify-center rounded"><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"></polyline></svg></button><button onclick="swapGlobalOrder('${anim.id}', 1)" class="w-4 h-3 bg-slate-700 hover:bg-slate-600 flex items-center justify-center rounded"><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg></button></div></div>`; item.onclick = (e) => { if(!e.target.closest('button')) { selectElement(anim.el); } }; animList.appendChild(item); }); } }
+
+            window.swapGlobalOrder = function(animId, direction) {
+                const allAnims = getAllSlideAnimations(); const currentIndex = allAnims.findIndex(a => a.id === animId); if (currentIndex === -1) return;
+                const newIndex = currentIndex + direction; if (newIndex < 0 || newIndex >= allAnims.length) return;
+                const currentAnim = allAnims[currentIndex]; const targetAnim = allAnims[newIndex];
+                const currentElAnims = getAnimations(currentAnim.el); const targetElAnims = getAnimations(targetAnim.el);
+                const animA = currentElAnims.find(a => a.id === currentAnim.id); const animB = targetElAnims.find(a => a.id === targetAnim.id);
+                const tempOrder = animA.order; animA.order = animB.order; animB.order = tempOrder;
+                setAnimations(currentAnim.el, currentElAnims); setAnimations(targetAnim.el, targetElAnims); saveCurrentSlideState(); renderAnimationsList();
+            };
+
+            function loadSlide(index) { 
+                if (!isPresenting && !isReadOnly) { selectElement(null); showPanel('bg'); } 
+                currentSlideIndex = index; const slideData = slides[currentSlideIndex]; if(!slideData) return; 
+                artboard.innerHTML = slideData.html || ''; artboard.style.background = slideData.bg || '#ffffff'; 
+                pendingAnimations = []; const allAnims = getAllSlideAnimations();
+                const elements = artboard.querySelectorAll('.design-element');
+                elements.forEach(el => {
+                    const elAnims = getAnimations(el); const wrapper = el.querySelector('.anim-wrapper');
+                    if(wrapper) {
+                        wrapper.className = 'anim-wrapper'; 
+                        const hasEntrance = elAnims.some(a => ['anim-fade','anim-zoom','anim-slide','anim-bounce','anim-appear'].includes(a.type));
+                        if(hasEntrance) wrapper.style.opacity = '0'; else wrapper.style.opacity = '1';
+                    }
+                    if(!isReadOnly) { el.addEventListener('mousedown', startDrag); if(el.dataset.type === 'text') setupTextEditing(el); const handle = el.querySelector('.resize-handle'); if(handle) handle.addEventListener('mousedown', initResize); } 
+                    if(el.dataset.link) { if(isPresenting) { el.style.cursor = 'pointer'; el.onclick = (e) => { e.stopPropagation(); openLink(el.dataset.link); }; } else { el.style.cursor = 'move'; el.onclick = null; } }
+                });
+                allAnims.forEach(anim => { if (anim.trigger === 'load' || !isPresenting) { playAnimationStep(anim); } else { pendingAnimations.push(anim); } });
+                updateSlideUI(); if(!isPresenting && !isReadOnly) { renderLayers(); renderAnimationsList(); }
+            }
+            window.addNewSlide = function() { saveCurrentSlideState(); slides.push({ html: '', bg: '#ffffff' }); loadSlide(slides.length - 1); saveCurrentSlideState(); };
+            window.changeSlide = function(direction) { if(!isReadOnly) saveCurrentSlideState(); let newIndex = currentSlideIndex + direction; if (newIndex < 0) newIndex = 0; if (newIndex >= slides.length) newIndex = slides.length - 1; if (newIndex !== currentSlideIndex) loadSlide(newIndex); };
+            
+            // Replaced default window.deleteSlide with modal confirmation to bypass native confirm() safely
+            window.deleteSlide = function() {
+                if (slides.length <= 1) {
+                    showToast("Cannot delete the last slide.", true);
+                    return;
+                }
+                openDeleteModal();
+            };
+
+            window.togglePresentation = function() { isPresenting = !isPresenting; if(document.activeElement instanceof HTMLElement) document.activeElement.blur(); if (isPresenting) { document.body.classList.add('presenting'); selectElement(null); } else { document.body.classList.remove('presenting'); } loadSlide(currentSlideIndex); };
+            window.enableReadOnlyMode = function() { isReadOnly = true; document.body.classList.add('read-only'); selectElement(null); const controls = document.querySelectorAll('.edit-control'); controls.forEach(c => c.style.display = 'none'); };
+            document.body.addEventListener('click', (e) => { if(isPresenting && e.target.closest('#workspace') && !e.target.closest('.design-element')) { if(pendingAnimations.length > 0) { const anim = pendingAnimations.shift(); playAnimationStep(anim); } else { window.changeSlide(1); } } });
+            window.toggleScrollNav = function() { isScrollNavEnabled = !isScrollNavEnabled; const btn = document.getElementById('btn-scroll-nav'); const ind = document.getElementById('scroll-nav-indicator'); if(isScrollNavEnabled) { btn.classList.remove('text-slate-500'); btn.classList.add('text-gold'); ind.classList.remove('hidden'); } else { btn.classList.add('text-slate-500'); btn.classList.remove('text-gold'); ind.classList.add('hidden'); } };
+            
+            workspace.addEventListener('wheel', (e) => { const canScroll = isScrollNavEnabled || isPresenting; if (!canScroll || e.ctrlKey) return; if(e.target.closest('#content-layers')) return; e.preventDefault(); if (scrollDebounce) return; if (Math.abs(e.deltaY) < 30) return; if (e.deltaY > 0) window.changeSlide(1); else window.changeSlide(-1); scrollDebounce = true; setTimeout(() => { scrollDebounce = false; }, 600); }, { passive: false });
+            function renderLayers() { if(isReadOnly || !layersList) return; layersList.innerHTML = ''; const elements = Array.from(artboard.querySelectorAll('.design-element')).reverse(); if (elements.length === 0) { if(noLayersMsg) noLayersMsg.classList.remove('hidden'); } else { if(noLayersMsg) noLayersMsg.classList.add('hidden'); elements.forEach(el => { const item = document.createElement('div'); item.className = 'layer-item'; if (el === selectedEl) item.classList.add('active'); let name = el.dataset.type; if (el.dataset.type === 'text') { const wrap = el.querySelector('.anim-wrapper'); name = wrap ? `T: ${wrap.innerText.substring(0, 10)}...` : 'Text'; } item.innerHTML = `<span class="text-slate-300 truncate capitalize">${name}</span>`; item.onclick = () => { selectElement(el); window.switchTab('props'); }; layersList.appendChild(item); }); } }
+            
+            window.addElement = function(type, imgSrc = null) { const el = document.createElement('div'); el.className = 'design-element'; el.style.left = '350px'; el.style.top = '250px'; el.style.zIndex = artboard.children.length + 1; el.dataset.type = type; const wrapper = document.createElement('div'); wrapper.className = 'anim-wrapper'; el.appendChild(wrapper); const handle = document.createElement('div'); handle.className = 'resize-handle'; el.appendChild(handle); handle.addEventListener('mousedown', initResize); if (type === 'text') { wrapper.innerText = 'Double click to edit'; el.style.fontSize = '32px'; el.style.color = '#000000'; el.style.fontFamily = 'Inter'; el.style.fontWeight = 'bold'; el.style.width = 'auto'; el.style.maxWidth = '400px'; setupTextEditing(el); } else if (type === 'rect') { el.style.width = '100px'; el.style.height = '100px'; wrapper.style.backgroundColor = '#B8860B'; } else if (type === 'circle') { el.style.width = '100px'; el.style.height = '100px'; wrapper.style.backgroundColor = '#B8860B'; wrapper.style.borderRadius = '50%'; } else if (type === 'line') { el.style.width = '150px'; el.style.height = '4px'; wrapper.style.backgroundColor = '#000000'; } else if (type === 'arrow') { el.style.width = '100px'; el.style.height = '40px'; wrapper.innerHTML = `<svg width="100%" height="100%" viewBox="0 0 100 40" preserveAspectRatio="none"><line x1="0" y1="20" x2="90" y2="20" stroke="currentColor" stroke-width="4" /><polygon points="90,10 100,20 90,30" fill="currentColor" /></svg>`; wrapper.style.color = '#000000'; el.dataset.type = 'svg-shape'; } else if (type === 'image' && imgSrc) { const img = document.createElement('img'); img.src = imgSrc; img.style.width = '100%'; img.style.height = '100%'; img.style.objectFit = 'cover'; img.draggable = false; wrapper.appendChild(img); el.style.width = '200px'; el.style.height = 'auto'; } el.addEventListener('mousedown', startDrag); artboard.appendChild(el); window.selectElement(el); renderLayers(); saveCurrentSlideState(); };
+            function setupTextEditing(el) { const wrapper = el.querySelector('.anim-wrapper'); el.addEventListener('dblclick', (e) => { if(isPresenting || isReadOnly) return; e.stopPropagation(); el.contentEditable = true; el.focus(); try{document.execCommand('selectAll', false, null);}catch(e){} }); el.addEventListener('blur', () => { el.contentEditable = false; if(selectedEl === el && wrapper) props.textInput.value = wrapper.innerText; saveCurrentSlideState(); }); }
+            function initResize(e) { e.stopPropagation(); if(isReadOnly || isPresenting) return; isResizing = true; startWidth = parseInt(document.defaultView.getComputedStyle(selectedEl).width, 10); startHeight = parseInt(document.defaultView.getComputedStyle(selectedEl).height, 10); startX = e.clientX; startY = e.clientY; document.documentElement.addEventListener('mousemove', doResize); document.documentElement.addEventListener('mouseup', stopResize); }
+            function doResize(e) { if(!isResizing) return; const w = startWidth + (e.clientX - startX); const h = startHeight + (e.clientY - startY); if(w > 20) selectedEl.style.width = w + 'px'; if (selectedEl.dataset.type === 'text') { selectedEl.style.maxWidth = w + 'px'; } else if (selectedEl.dataset.type === 'line' || selectedEl.dataset.type === 'svg-shape') { } else { if(h > 20) selectedEl.style.height = h + 'px'; } updatePropertiesPanel(); }
+            function stopResize() { isResizing = false; document.documentElement.removeEventListener('mousemove', doResize); document.documentElement.removeEventListener('mouseup', stopResize); saveCurrentSlideState(); }
+            window.handleImageUpload = function(input) { if (input.files && input.files[0]) { const reader = new FileReader(); reader.onload = async function(e) { let optimized = e.target.result; try { optimized = await optimizeImage(optimized); } catch(err) { console.warn("Upload compression failed"); } window.addElement('image', optimized); }; reader.readAsDataURL(input.files[0]); } input.value = ''; };
+            window.handleBgUpload = function(input) { if (input.files && input.files[0]) { const reader = new FileReader(); reader.onload = async function(e) { let optimized = e.target.result; try { optimized = await optimizeImage(optimized); } catch(err) { console.warn("Bg compression failed"); } artboard.style.backgroundImage = `url('${optimized}')`; artboard.style.backgroundSize = 'cover'; saveCurrentSlideState(); }; reader.readAsDataURL(input.files[0]); } input.value = ''; };
+            window.clearBgImage = function() { artboard.style.backgroundImage = 'none'; artboard.style.backgroundColor = '#ffffff'; if(props.bgColorInput) props.bgColorInput.value = '#ffffff'; saveCurrentSlideState(); };
+            window.setTheme = function(theme) { switch(theme) { case 'white': artboard.style.background = '#ffffff'; props.bgColorInput.value = '#ffffff'; break; case 'black': artboard.style.background = '#000000'; props.bgColorInput.value = '#000000'; break; case 'gold': artboard.style.background = 'linear-gradient(135deg, #fcd34d 0%, #d97706 100%)'; break; case 'midnight': artboard.style.background = 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)'; break; case 'royal': artboard.style.background = 'linear-gradient(135deg, #1e3a8a 0%, #4c1d95 100%)'; break; case 'sunrise': artboard.style.background = 'linear-gradient(135deg, #fb923c 0%, #ec4899 100%)'; break; } saveCurrentSlideState(); };
+            
+            window.openDeleteModal = function() {
+                document.getElementById('delete-modal-title').innerText = "Delete Slide";
+                if (slides.length <= 1) {
+                    deleteModalMsg.innerText = "Only one slide left. Clear it instead?";
+                } else {
+                    deleteModalMsg.innerText = `Delete slide ${currentSlideIndex + 1}?`;
+                }
+                const confirmBtn = document.getElementById('delete-modal-confirm-btn');
+                if (confirmBtn) {
+                    confirmBtn.setAttribute('onclick', 'confirmDeleteSlide()');
+                }
+                deleteModal.classList.add('active');
+            };
+            
+            window.closeDeleteModal = function() {
+                deleteModal.classList.remove('active');
+            };
+            
+            window.confirmDeleteSlide = function() {
+                deleteModal.classList.remove('active');
+                if (slides.length <= 1) {
+                    slides[0] = { html: '', bg: '#ffffff' };
+                    loadSlide(0);
+                } else {
+                    slides.splice(currentSlideIndex, 1);
+                    const newIndex = Math.max(0, currentSlideIndex - 1);
+                    loadSlide(newIndex);
+                    saveCurrentSlideState();
+                }
+            };
+            
+            window.openSaveModal = function(mode) { saveCurrentSlideState(); const json = JSON.stringify(slides); const cipher = btoa(encodeURIComponent(json)); if (mode === 'view') { modalTitle.innerText = "Share Read-Only Link"; modalDesc.innerText = "Share this code. View only."; modalInput.value = "lux_view_" + cipher; if(modalFooter) modalFooter.classList.add('hidden'); if(modalImportSection) modalImportSection.classList.add('hidden'); } else { modalTitle.innerText = "Save Project"; modalDesc.innerText = "Copy to save."; modalInput.value = "lux_design_" + cipher; if(modalFooter) modalFooter.classList.remove('hidden'); if(modalImportSection) modalImportSection.classList.add('hidden'); } modal.classList.add('active'); };
+            
+            window.openLoadModal = function() { modalTitle.innerText = "Load Project"; modalDesc.innerText = "Paste lux design code here."; modalInput.value = ""; modalActionBtn.innerText = "Load Project"; if(modalImportSection) modalImportSection.classList.remove('hidden'); modalActionBtn.onclick = function() { const token = modalInput.value.trim(); let type = "", payload = ""; if (token.startsWith("lux_design_")) { type = "edit"; payload = token.replace("lux_design_", ""); } else if (token.startsWith("lux_view_")) { type = "view"; payload = token.replace("lux_view_", ""); } else { showToast("Invalid Code.", true); return; } try { const json = decodeURIComponent(atob(payload)); slides = JSON.parse(json); currentSlideIndex = 0; if (type === 'view') { window.enableReadOnlyMode(); setTimeout(() => window.togglePresentation(), 100); } else { isReadOnly = false; document.body.classList.remove('read-only'); const controls = document.querySelectorAll('.edit-control'); controls.forEach(c => c.style.display = ''); } loadSlide(0); modal.classList.remove('active'); } catch(e) { showToast("Corrupt Data.", true); } }; modal.classList.add('active'); };
+            
+            window.handleFileImport = function(input) {
+                if(input.files && input.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        modalInput.value = e.target.result; 
+                    };
+                    reader.readAsText(input.files[0]);
+                }
+            };
+
+            window.handleHTMLImport = function(input) {
+                if(input.files && input.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const content = e.target.result;
+                        const jsonMatch = content.match(/const slides\s*=\s*(\[.*?\]);/s);
+                        if (jsonMatch) {
+                            try {
+                                const rawSlides = JSON.parse(jsonMatch[1]);
+                                
+                                const uniqueSlides = [];
+                                const processedLabels = new Set();
+                                const parser = new DOMParser();
+
+                                rawSlides.forEach(slide => {
+                                    if (!slide.displayLabel || !processedLabels.has(slide.displayLabel)) {
+                                        if(slide.displayLabel) processedLabels.add(slide.displayLabel);
+                                        
+                                        const doc = parser.parseFromString(slide.html, 'text/html');
+                                        const elements = Array.from(doc.querySelectorAll('.design-element'));
+                                        
+                                        elements.forEach(el => {
+                                            el.removeAttribute('onclick');
+                                            el.style.cursor = 'move'; 
+                                            
+                                            const existingHandle = el.querySelector('.resize-handle');
+                                            if (existingHandle) existingHandle.remove();
+                                            const handle = doc.createElement('div');
+                                            handle.className = 'resize-handle';
+                                            el.appendChild(handle);
+                                            
+                                            el.contentEditable = "false";
+
+                                            const wrapper = el.querySelector('.anim-wrapper');
+                                            if(wrapper) {
+                                                const classes = wrapper.className.split(' ');
+                                                const cleanClasses = classes.filter(c => !c.startsWith('anim-') || c === 'anim-wrapper');
+                                                wrapper.className = cleanClasses.join(' ');
+                                                wrapper.style.opacity = ''; 
+                                            }
+                                        });
+                                        
+                                        slide.html = doc.body.innerHTML;
+                                        uniqueSlides.push(slide);
+                                    }
+                                });
+
+                                slides = uniqueSlides;
+                                currentSlideIndex = 0;
+                                isReadOnly = false;
+                                document.body.classList.remove('read-only');
+                                const controls = document.querySelectorAll('.edit-control'); 
+                                controls.forEach(c => c.style.display = '');
+                                
+                                loadSlide(0);
+                                saveCurrentSlideState();
+                                showToast("Project imported successfully!");
+                            } catch (err) {
+                                console.error(err);
+                                showToast("Found Luxworld data, but it was corrupted.", true);
+                            }
+                        } else {
+                            showToast("Could not find Luxworld project data in this HTML file.", true);
+                        }
+                    };
+                    reader.readAsText(input.files[0]);
+                }
+                input.value = ''; 
+            };
+            
+            window.closeModal = function() { modal.classList.remove('active'); };
+            window.openAiModal = function() { aiModal.classList.add('active'); aiPrompt.focus(); };
+            window.closeAiModal = function() { aiModal.classList.remove('active'); };
+
+            window.generateAI = async function(type) {
+                const prompt = document.getElementById('ai-prompt').value.trim(); 
+                if(!prompt) {
+                    showToast("Please enter a prompt.", true);
+                    return;
+                }
+                
+                document.getElementById('ai-loading').style.display = 'flex';
+                try {
+                    if(type === 'text') {
+                        const response = await puter.ai.chat(`Write short text about: ${prompt}`);
+                        window.addElement('text');
+                        
+                        setTimeout(() => { 
+                            if(selectedEl) { 
+                                const w = selectedEl.querySelector('.anim-wrapper'); 
+                                if(w) w.innerText = response.message?.content || response.toString() || "AI Text generated"; 
+                                saveCurrentSlideState(); 
+                            } 
+                        }, 100);
+                    } else {
+                        const imgElement = await puter.ai.txt2img(prompt);
+                        let imgData = imgElement.src;
+                        
+                        try { 
+                            let optimized = await optimizeImage(imgData); 
+                            window.addElement('image', optimized);
+                        } catch(err) {
+                            window.addElement('image', imgData);
+                        }
+                    }
+                    closeAiModal();
+                    showToast("AI generation complete.");
+                } catch(e) {
+                    console.error(e);
+                    showToast("AI Generation failed.", true);
+                } finally {
+                    document.getElementById('ai-loading').style.display = 'none';
+                }
+            };
+
+            function selectElement(el) { 
+                if(isReadOnly) return; 
+                if (selectedEl) selectedEl.classList.remove('selected'); 
+                selectedEl = el; 
+                if (el) { 
+                    if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
+                        document.activeElement.blur();
+                    }
+                    selectedEl.classList.add('selected'); 
+                    updatePropertiesPanel(); 
+                    panels.actions.classList.remove('hidden'); 
+                } else { 
+                    showPanel('bg'); 
+                    panels.actions.classList.add('hidden'); 
+                } 
+                renderLayers(); 
+            }
+            window.selectElement = selectElement;
+            window.deselectAll = function(e) { if (e.target === artboard) window.selectElement(null); };
+            function showPanel(name) { Object.values(panels).forEach(p => { if (p && p !== panels.actions) p.classList.add('hidden'); }); if(panels[name]) panels[name].classList.remove('hidden'); if (name === 'bg' || name === 'el') window.switchTab('props'); }
+            window.showPanel = showPanel;
+
+            function updatePropertiesPanel() {
+                if (!selectedEl) return showPanel('none');
+                showPanel('el'); const type = selectedEl.dataset.type; const styles = window.getComputedStyle(selectedEl);
+                if(props.textGroup) props.textGroup.classList.add('hidden'); 
+                if(props.fontGroup) props.fontGroup.classList.add('hidden'); 
+                if(props.fontFamilyGroup) props.fontFamilyGroup.classList.add('hidden');
+                
+                if(props.opacityInput) props.opacityInput.value = (parseFloat(styles.opacity) || 1) * 100;
+                if(props.rotationNumInput) { props.rotationNumInput.value = 0; const tr = styles.transform; if(tr !== 'none') { var values = tr.split('(')[1].split(')')[0].split(','); var angle = Math.round(Math.atan2(values[1], values[0]) * (180/Math.PI)); if(angle < 0) angle += 360; props.rotationNumInput.value = angle; } }
+                const wrapper = selectedEl.querySelector('.anim-wrapper'); if(props.linkInput) props.linkInput.value = selectedEl.dataset.link || ""; 
+                if (type === 'text') {
+                    if(props.textGroup) props.textGroup.classList.remove('hidden'); 
+                    if(props.fontGroup) props.fontGroup.classList.remove('hidden'); 
+                    if(props.fontFamilyGroup) props.fontFamilyGroup.classList.remove('hidden'); 
+                    if(props.textInput) props.textInput.value = selectedEl.innerText;
+                    if(props.sizeNumInput) props.sizeNumInput.value = parseInt(styles.fontSize);
+                    if(props.fontInput) props.fontInput.value = styles.fontFamily.split(',')[0].replace(/['"]/g, '');
+                    if(props.colorInput) props.colorInput.value = rgbToHex(styles.color);
+                    if (styles.fontWeight === '700' || styles.fontWeight === 'bold') { props.boldBtn.classList.remove('bg-slate-800', 'text-white'); props.boldBtn.classList.add('bg-gold', 'text-black'); } else { props.boldBtn.classList.remove('bg-gold', 'text-black'); props.boldBtn.classList.add('bg-slate-800', 'text-white'); }
+                    if (styles.textDecoration.includes('underline')) { props.underlineBtn.classList.remove('bg-slate-800', 'text-white'); props.underlineBtn.classList.add('bg-gold', 'text-black'); } else { props.underlineBtn.classList.remove('bg-gold', 'text-black'); props.underlineBtn.classList.add('bg-slate-800', 'text-white'); }
+                } else if (type === 'svg-shape') { 
+                    if(wrapper && props.colorInput) props.colorInput.value = rgbToHex(window.getComputedStyle(wrapper).color); 
+                } else if (type === 'image') {
+                    // Intentionally blank. No custom controls mapped.
+                } else { 
+                    if(wrapper && props.colorInput) props.colorInput.value = rgbToHex(window.getComputedStyle(wrapper).backgroundColor); 
+                }
+                const anims = getAnimations(selectedEl); const listContainer = document.getElementById('prop-anim-list'); listContainer.innerHTML = '';
+                if (anims.length === 0) { listContainer.innerHTML = '<div class="text-[10px] text-slate-600 italic">None</div>'; } else { anims.forEach((a, i) => { const d = document.createElement('div'); d.className = 'flex items-center justify-between bg-slate-800 rounded px-2 py-1 border border-slate-700'; let typeName = a.type.replace('anim-', ''); d.innerHTML = `<div class="flex items-center gap-2"><span class="text-[10px] text-gold font-mono">${i+1}</span><span class="text-[10px] text-slate-300 capitalize">${typeName}</span><span class="text-[8px] bg-slate-700 px-1 rounded text-slate-500">${a.trigger}</span></div><button onclick="removeAnimation('${a.id}')" class="text-slate-500 hover:text-red-400"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>`; listContainer.appendChild(d); }); }
+            }
+            function rgbToHex(col) { if(col && col.charAt(0)=='r'){ col=col.replace('rgb(','').replace(')','').split(','); var r=parseInt(col[0],10).toString(16); var g=parseInt(col[1],10).toString(16); var b=parseInt(col[2],10).toString(16); r=r.length==1?'0'+r:r; g=g.length==1?'0'+g:g; b=b.length==1?'0'+b:b; return '#'+r+g+b; } return col || '#ffffff'; }
+            function startDrag(e) { 
+                if(e.target.isContentEditable || isPresenting || isReadOnly) return; 
+                if(e.target.tagName === 'INPUT') return; 
+                if(e.target.classList.contains('resize-handle')) return; 
+                
+                if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
+                    document.activeElement.blur();
+                }
+                
+                e.preventDefault(); 
+                e.stopPropagation(); 
+                window.selectElement(e.target.closest('.design-element')); 
+                isDragging = true; 
+                const rect = selectedEl.getBoundingClientRect(); 
+                dragOffsetX = e.clientX - rect.left; 
+                dragOffsetY = e.clientY - rect.top; 
+                document.addEventListener('mousemove', onDrag); 
+                document.addEventListener('mouseup', stopDrag); 
+            }
+            function onDrag(e) { if (!isDragging || !selectedEl) return; const boardRect = artboard.getBoundingClientRect(); let x = e.clientX - boardRect.left - dragOffsetX; let y = e.clientY - boardRect.top - dragOffsetY; selectedEl.style.left = `${x}px`; selectedEl.style.top = `${y}px`; }
+            function stopDrag() { isDragging = false; document.removeEventListener('mousemove', onDrag); document.removeEventListener('mouseup', stopDrag); saveCurrentSlideState(); }
+
+            if(props.linkInput) props.linkInput.addEventListener('input', (e) => { if(!selectedEl) return; const url = e.target.value; selectedEl.dataset.link = url; if (selectedEl.dataset.type === 'text') { if (url && url.length > 0) { selectedEl.style.textDecoration = 'underline'; selectedEl.style.color = '#38bdf8'; props.colorInput.value = '#38bdf8'; } else { selectedEl.style.textDecoration = 'none'; } } saveCurrentSlideState(); });
+            if(props.bgColorInput) props.bgColorInput.addEventListener('input', (e) => { artboard.style.background = e.target.value; });
+            if(props.bgColorInput) props.bgColorInput.addEventListener('change', (e) => { saveCurrentSlideState(); });
+            if(props.colorInput) props.colorInput.addEventListener('input', (e) => { if (!selectedEl) return; const wrapper = selectedEl.querySelector('.anim-wrapper'); if (selectedEl.dataset.type === 'text' || selectedEl.dataset.type === 'svg-shape') { selectedEl.style.color = e.target.value; } else if (wrapper) { wrapper.style.backgroundColor = e.target.value; } });
+            if(props.colorInput) props.colorInput.addEventListener('change', saveCurrentSlideState);
+            if(props.textInput) props.textInput.addEventListener('input', (e) => { if (selectedEl && selectedEl.dataset.type === 'text') { const wrapper = selectedEl.querySelector('.anim-wrapper'); if(wrapper) wrapper.innerText = e.target.value; renderLayers(); renderAnimationsList(); } });
+            if(props.textInput) props.textInput.addEventListener('change', saveCurrentSlideState);
+            if(props.sizeNumInput) props.sizeNumInput.addEventListener('input', (e) => { if (selectedEl && selectedEl.dataset.type === 'text') { selectedEl.style.fontSize = e.target.value + 'px'; } });
+            if(props.sizeNumInput) props.sizeNumInput.addEventListener('change', saveCurrentSlideState);
+            if(props.fontInput) props.fontInput.addEventListener('change', (e) => { if (selectedEl && selectedEl.dataset.type === 'text') { selectedEl.style.fontFamily = e.target.value; saveCurrentSlideState(); } });
+            if(props.rotationNumInput) props.rotationNumInput.addEventListener('input', (e) => { if (selectedEl) { selectedEl.style.transform = `rotate(${e.target.value}deg)`; } });
+            if(props.rotationNumInput) props.rotationNumInput.addEventListener('change', saveCurrentSlideState);
+            if(props.opacityInput) props.opacityInput.addEventListener('input', (e) => { if (selectedEl) { selectedEl.style.opacity = e.target.value / 100; } });
+            if(props.opacityInput) props.opacityInput.addEventListener('change', saveCurrentSlideState);
+            window.moveLayer = function(dir) { if(selectedEl) { const z = parseInt(window.getComputedStyle(selectedEl).zIndex)||1; selectedEl.style.zIndex = dir==='up' ? z+1 : Math.max(0, z-1); saveCurrentSlideState(); } };
+            window.deleteSelected = function() { if(selectedEl) { selectedEl.remove(); selectedEl = null; showPanel('none'); renderLayers(); renderAnimationsList(); saveCurrentSlideState(); } };
+            
+            window.exportToHTML = function() {
+                saveCurrentSlideState();
+                let exportSlides = []; const parser = new DOMParser();
+                slides.forEach((slide, originalIndex) => {
+                    const doc = parser.parseFromString(slide.html, 'text/html'); const elements = Array.from(doc.querySelectorAll('.design-element'));
+                    let globalClickAnims = []; elements.forEach((el, elIndex) => { const anims = JSON.parse(el.dataset.animations || '[]'); anims.forEach(a => { if(a.trigger === 'click') { globalClickAnims.push({ ...a, elIndex }); } }); }); globalClickAnims.sort((a,b) => a.order - b.order);
+                    const numSteps = globalClickAnims.length + 1;
+                    for (let step = 0; step < numSteps; step++) {
+                        const stepDoc = parser.parseFromString(slide.html, 'text/html'); const stepElements = Array.from(stepDoc.querySelectorAll('.design-element'));
+                        stepElements.forEach((el, idx) => {
+                            const handle = el.querySelector('.resize-handle'); if(handle) handle.remove(); el.removeAttribute('contenteditable'); el.classList.remove('selected');
+                            if(el.dataset.link) { el.style.cursor = 'pointer'; el.setAttribute('onclick', `window.open('${el.dataset.link}', '_blank')`); }
+                            const elAnims = JSON.parse(el.dataset.animations || '[]'); const wrapper = el.querySelector('.anim-wrapper');
+                            const myClickAnims = globalClickAnims.filter(ca => ca.elIndex === idx);
+                            let shouldHide = false; let classes = [];
+                            if (step === 0) { elAnims.filter(a => a.trigger === 'load').forEach(a => classes.push(a.type)); }
+                            const firstEntrance = myClickAnims.find(a => ['anim-fade','anim-zoom','anim-slide','anim-bounce','anim-appear'].includes(a.type));
+                            if (firstEntrance) { const entranceStep = globalClickAnims.indexOf(firstEntrance) + 1; if (step < entranceStep) { shouldHide = true; } }
+                            const pastExits = myClickAnims.filter(a => { const aStep = globalClickAnims.indexOf(a) + 1; return step > aStep && ['anim-fade-out','anim-zoom-out','anim-disappear'].includes(a.type); });
+                            if (pastExits.length > 0) { shouldHide = true; }
+                            if (step > 0) { const currentGlobalAnim = globalClickAnims[step - 1]; if (currentGlobalAnim.elIndex === idx) { classes.push(currentGlobalAnim.type); if (shouldHide) shouldHide = false; } }
+                            if(wrapper) { wrapper.className = `anim-wrapper ${classes.join(' ')}`; if(classes.length > 0) { wrapper.style.opacity = ''; } else { if(shouldHide) wrapper.style.opacity = '0'; else wrapper.style.opacity = ''; } }
+                        });
+                        exportSlides.push({ html: stepDoc.body.innerHTML, bg: slide.bg, displayLabel: `${originalIndex + 1} / ${slides.length}` });
+                    }
+                });
+                const slidesJson = JSON.stringify(exportSlides).replace(/<\/script/g, '<\\/script');
+                const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Luxworld Slideshow</title><style>body{background-color:#0f172a;margin:0;display:flex;align-items:center;justify-content:center;height:100vh;overflow:hidden;font-family:sans-serif;}#stage-container{width:100%;height:100%;display:flex;align-items:center;justify-content:center;}#stage{position:relative;width:1000px;height:750px;background:white;box-shadow:0 0 50px rgba(0,0,0,0.5);overflow:hidden;}.design-element{position:absolute;box-sizing:border-box;}.anim-wrapper{width:100%;height:100%;display:flex;align-items:center;justify-content:center;}@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}@keyframes fadeOut{from{opacity:1;}to{opacity:0;}}@keyframes slideUp{from{transform:translateY(50px);opacity:0;}to{transform:translateY(0);opacity:1;}}@keyframes zoomIn{from{transform:scale(0.5);opacity:0;}to{transform:scale(1);opacity:1;}}@keyframes zoomOut{from{transform:scale(1);opacity:1;}to{transform:scale(0);opacity:0;}}@keyframes bounceIn{0%{transform:scale(0.3);opacity:0;}50%{transform:scale(1.05);opacity:1;}70%{transform:scale(0.9);}100%{transform:scale(1);}}@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}@keyframes appear{from{opacity:0;}to{opacity:1;}}@keyframes disappear{from{opacity:1;}to{opacity:0;}}.anim-fade{animation:fadeIn 1s ease-out forwards;}.anim-fade-out{animation:fadeOut 1s ease-out forwards;}.anim-slide{animation:slideUp 0.8s cubic-bezier(0.16,1,0.3,1) forwards;}.anim-zoom{animation:zoomIn 0.8s cubic-bezier(0.16,1,0.3,1) forwards;}.anim-zoom-out{animation:zoomOut 0.8s cubic-bezier(0.16,1,0.3,1) forwards;}.anim-bounce{animation:bounceIn 0.8s cubic-bezier(0.175,0.885,0.32,1.275) forwards;}.anim-spin{animation:spin 1s linear;}.anim-appear{animation:appear 0.1s linear forwards;}.anim-disappear{animation:disappear 0.1s linear forwards;}#nav{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:10px;background:rgba(0,0,0,0.8);padding:10px 20px;border-radius:20px;backdrop-filter:blur(5px);z-index:100;}button{color:white;background:none;border:1px solid #555;padding:5px 15px;border-radius:20px;cursor:pointer;font-size:14px;}button:hover{background:#333;}</style></head><body><div id="stage-container"><div id="stage"></div></div><div id="nav"><button onclick="changeSlide(-1)">Prev</button><span id="counter" style="color:#fbbf24;align-self:center;font-family:monospace;">1 / 1</span><button onclick="changeSlide(1)">Next</button></div><script>const slides=${slidesJson};let currentIndex=0;const stage=document.getElementById('stage');const counter=document.getElementById('counter');function resize(){const w=window.innerWidth;const h=window.innerHeight;const scale=Math.min(w/1000,h/750)*0.9;stage.style.transform=\`scale(\${scale})\`;}window.addEventListener('resize',resize);resize();function loadSlide(index){if(index<0)index=0;if(index>=slides.length)index=slides.length-1;currentIndex=index;const s=slides[index];stage.innerHTML=s.html;stage.style.background=s.bg;if(s.displayLabel)counter.innerText=s.displayLabel;}function changeSlide(dir){loadSlide(currentIndex+dir);}document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key===' ')changeSlide(1);if(e.key==='ArrowLeft')changeSlide(-1);});loadSlide(0);<\/script></body></html>`;
+                const blob = new Blob([html], {type: 'text/html'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'luxworld_slideshow.html'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+            };
+
+            window.openPublishModal = function() {
+                publishModal.classList.add('active');
+                document.getElementById('publish-alias').focus();
+            };
+            
+            window.closePublishModal = function() {
+                publishModal.classList.remove('active');
+            };
+
+            window.confirmPublish = async function() {
+                const alias = document.getElementById('publish-alias').value.trim() || "my-slides";
+                const cleanAlias = alias.toLowerCase().replace(/[^a-z0-9-]/g, '');
+                const subdomain = `${cleanAlias}lstudio`;
+
+                closePublishModal();
+                showToast(`Publishing to ${subdomain}...`, false, false, 5000);
+
+                try {
+                    saveCurrentSlideState();
+                    let exportSlides = []; const parser = new DOMParser();
+                    slides.forEach((slide, originalIndex) => {
+                        const doc = parser.parseFromString(slide.html, 'text/html'); const elements = Array.from(doc.querySelectorAll('.design-element'));
+                        let globalClickAnims = []; elements.forEach((el, elIndex) => { const anims = JSON.parse(el.dataset.animations || '[]'); anims.forEach(a => { if(a.trigger === 'click') { globalClickAnims.push({ ...a, elIndex }); } }); }); globalClickAnims.sort((a,b) => a.order - b.order);
+                        const numSteps = globalClickAnims.length + 1;
+                        for (let step = 0; step < numSteps; step++) {
+                            const stepDoc = parser.parseFromString(slide.html, 'text/html'); const stepElements = Array.from(stepDoc.querySelectorAll('.design-element'));
+                            stepElements.forEach((el, idx) => {
+                                const handle = el.querySelector('.resize-handle'); if(handle) handle.remove(); el.removeAttribute('contenteditable'); el.classList.remove('selected');
+                                if(el.dataset.link) { el.style.cursor = 'pointer'; el.setAttribute('onclick', `window.open('${el.dataset.link}', '_blank')`); }
+                                const elAnims = JSON.parse(el.dataset.animations || '[]'); const wrapper = el.querySelector('.anim-wrapper');
+                                const myClickAnims = globalClickAnims.filter(ca => ca.elIndex === idx);
+                                let shouldHide = false; let classes = [];
+                                if (step === 0) { elAnims.filter(a => a.trigger === 'load').forEach(a => classes.push(a.type)); }
+                                const firstEntrance = myClickAnims.find(a => ['anim-fade','anim-zoom','anim-slide','anim-bounce','anim-appear'].includes(a.type));
+                                if (firstEntrance) { const entranceStep = globalClickAnims.indexOf(firstEntrance) + 1; if (step < entranceStep) { shouldHide = true; } }
+                                const pastExits = myClickAnims.filter(a => { const aStep = globalClickAnims.indexOf(a) + 1; return step > aStep && ['anim-fade-out','anim-zoom-out','anim-disappear'].includes(a.type); });
+                                if (pastExits.length > 0) { shouldHide = true; }
+                                if (step > 0) { const currentGlobalAnim = globalClickAnims[step - 1]; if (currentGlobalAnim.elIndex === idx) { classes.push(currentGlobalAnim.type); if (shouldHide) shouldHide = false; } }
+                                if(wrapper) { wrapper.className = `anim-wrapper ${classes.join(' ')}`; if(classes.length > 0) { wrapper.style.opacity = ''; } else { if(shouldHide) wrapper.style.opacity = '0'; else wrapper.style.opacity = ''; } }
+                            });
+                            exportSlides.push({ html: stepDoc.body.innerHTML, bg: slide.bg, displayLabel: `${originalIndex + 1} / ${slides.length}` });
+                        }
+                    });
+                    const slidesJson = JSON.stringify(exportSlides).replace(/<\/script/g, '<\\/script');
+                    const htmlContent = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${cleanAlias} - Lux Studio</title><style>body{background-color:#0f172a;margin:0;display:flex;align-items:center;justify-content:center;height:100vh;overflow:hidden;font-family:sans-serif;}#stage-container{width:100%;height:100%;display:flex;align-items:center;justify-content:center;}#stage{position:relative;width:1000px;height:750px;background:white;box-shadow:0 0 50px rgba(0,0,0,0.5);overflow:hidden;}.design-element{position:absolute;box-sizing:border-box;}.anim-wrapper{width:100%;height:100%;display:flex;align-items:center;justify-content:center;}@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}@keyframes fadeOut{from{opacity:1;}to{opacity:0;}}@keyframes slideUp{from{transform:translateY(50px);opacity:0;}to{transform:translateY(0);opacity:1;}}@keyframes zoomIn{from{transform:scale(0.5);opacity:0;}to{transform:scale(1);opacity:1;}}@keyframes zoomOut{from{transform:scale(1);opacity:1;}to{transform:scale(0);opacity:0;}}@keyframes bounceIn{0%{transform:scale(0.3);opacity:0;}50%{transform:scale(1.05);opacity:1;}70%{transform:scale(0.9);}100%{transform:scale(1);}}@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}@keyframes appear{from{opacity:0;}to{opacity:1;}}@keyframes disappear{from{opacity:1;}to{opacity:0;}}.anim-fade{animation:fadeIn 1s ease-out forwards;}.anim-fade-out{animation:fadeOut 1s ease-out forwards;}.anim-slide{animation:slideUp 0.8s cubic-bezier(0.16,1,0.3,1) forwards;}.anim-zoom{animation:zoomIn 0.8s cubic-bezier(0.16,1,0.3,1) forwards;}.anim-zoom-out{animation:zoomOut 0.8s cubic-bezier(0.16,1,0.3,1) forwards;}.anim-bounce{animation:bounceIn 0.8s cubic-bezier(0.175,0.885,0.32,1.275) forwards;}.anim-spin{animation:spin 1s linear;}.anim-appear{animation:appear 0.1s linear forwards;}.anim-disappear{animation:disappear 0.1s linear forwards;}#nav{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:10px;background:rgba(0,0,0,0.8);padding:10px 20px;border-radius:20px;backdrop-filter:blur(5px);z-index:100;}button{color:white;background:none;border:1px solid #555;padding:5px 15px;border-radius:20px;cursor:pointer;font-size:14px;}button:hover{background:#333;}</style></head><body><div id="stage-container"><div id="stage"></div></div><div id="nav"><button onclick="changeSlide(-1)">Prev</button><span id="counter" style="color:#fbbf24;align-self:center;font-family:monospace;">1 / 1</span><button onclick="changeSlide(1)">Next</button></div><script>const slides=${slidesJson};let currentIndex=0;const stage=document.getElementById('stage');const counter=document.getElementById('counter');function resize(){const w=window.innerWidth;const h=window.innerHeight;const scale=Math.min(w/1000,h/750)*0.9;stage.style.transform=\`scale(\${scale})\`;}window.addEventListener('resize',resize);resize();function loadSlide(index){if(index<0)index=0;if(index>=slides.length)index=slides.length-1;currentIndex=index;const s=slides[index];stage.innerHTML=s.html;stage.style.background=s.bg;if(s.displayLabel)counter.innerText=s.displayLabel;}function changeSlide(dir){loadSlide(currentIndex+dir);}document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key===' ')changeSlide(1);if(e.key==='ArrowLeft')changeSlide(-1);});loadSlide(0);<\/script></body></html>`;
+
+                    const dirName = `luxstudio_publish_${subdomain}`;
+                    await puter.fs.mkdir(dirName, { recursive: true });
+                    await puter.fs.write(`${dirName}/index.html`, htmlContent);
+                    
+                    const site = await puter.hosting.create(subdomain, dirName);
+                    
+                    showToast(`Success! Live at: <a href="https://${site.subdomain}.puter.site" target="_blank" class="text-blue-300 underline hover:text-blue-200 ml-1">https://${site.subdomain}.puter.site</a>`, false, true, 8000);
+                } catch (error) {
+                    console.error("Publishing error:", error);
+                    showToast("Publish failed. Name might be taken.", true);
+                }
+            };
+
+            // Preload last active project on application startup, but keep the Presentation Hub visible
+            if (projects && projects.length > 0) {
+                openProject(projects[0].id);
+                document.getElementById('dashboard-screen').style.display = 'flex';
+            } else {
+                updateSlideUI();
+                showPanel('bg');
+                document.getElementById('dashboard-screen').style.display = 'flex';
+            }
+        });
+    </script>
+</body>
+</html>
