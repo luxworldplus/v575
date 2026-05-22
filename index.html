@@ -1,14 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
+<!-- ... existing code ... -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Luxworld Studio</title>
+    <title>Luxworld+ Studio</title>
+    <!-- Custom brand L logo SVG Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M50 5 L95 50 L50 95 L5 50 Z' stroke='%23fbbf24' stroke-width='4' fill='none' /><path d='M50 15 L85 50 L50 85 L15 50 Z' stroke='%23fbbf24' stroke-width='2' fill='none' /><text x='50' y='65' font-family='serif' font-size='40' font-weight='bold' fill='%23fbbf24' text-anchor='middle'>L</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <!-- Puter.js Integration -->
-    <script src="https://js.puter.com/v2/"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Playfair+Display:wght@700&family=Roboto+Slab&family=Montserrat:wght@400;900&family=Open+Sans:wght@400;700&family=Lato:wght@400;700&family=Poppins:wght@400;700&family=Merriweather:wght@400;700&family=Oswald:wght@400;700&family=Raleway:wght@400;700&family=Pacifico&display=swap" rel="stylesheet">
+<!-- ... existing code ... -->
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #e2e8f0; overflow: hidden; }
         .text-gold { color: #fbbf24; }
@@ -96,6 +98,7 @@
 </head>
 <body class="flex flex-col h-screen">
 
+    <!-- Dashboard / Presentation Hub Landing Screen -->
     <div id="dashboard-screen" class="fixed inset-0 bg-slate-900 z-[1000] flex flex-col overflow-y-auto">
         <div class="h-16 border-b border-slate-800 flex items-center justify-between px-8 bg-slate-950 sticky top-0 z-10 shadow-md">
             <div class="flex items-center gap-3">
@@ -112,6 +115,12 @@
                 <div>
                     <h2 class="text-2xl font-bold text-white mb-1">My Presentation Hub</h2>
                     <p class="text-slate-400 text-xs">Create, modify, and access all your dynamic slider projects safely stored on this computer.</p>
+                    
+                    <!-- Deletion Instructions Banner -->
+                    <div class="mt-3 bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs rounded-lg p-3 flex items-center gap-2 max-w-xl">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="shrink-0 text-gold"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                        <span>To delete a file, you need to click delete then open the project.</span>
+                    </div>
                 </div>
                 <button onclick="createNewProject()" class="bg-gold hover:opacity-90 text-white font-bold text-xs px-6 py-3 rounded-full flex items-center justify-center gap-2 shadow-lg transition-all transform hover:scale-[1.02] active:scale-[0.98]">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -129,6 +138,7 @@
         </div>
     </div>
 
+    <!-- Studio Header -->
     <header class="h-14 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4 z-50">
         <div class="flex items-center gap-1">
             <button onclick="showDashboard()" class="p-2 hover:bg-slate-800 rounded-lg text-gold hover:text-yellow-300 transition-colors mr-2" title="Back to Dashboard">
@@ -163,14 +173,16 @@
     </header>
     <button id="exit-present-btn" onclick="togglePresentation()" class="fixed top-4 right-4 z-[100] bg-white/10 hover:bg-white/30 text-white p-3 rounded-full backdrop-blur-sm transition-all cursor-pointer"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
 
+    <!-- Main Studio Workspace -->
     <div class="flex flex-grow overflow-hidden">
+        <!-- Sidebar Elements Toolbox -->
         <aside class="w-20 bg-slate-900 border-r border-slate-800 flex flex-col items-center py-4 gap-6 z-40 overflow-y-auto">
             <button onclick="openAiModal()" class="group flex flex-col items-center gap-1 w-full relative"><div class="w-10 h-10 bg-slate-800 group-hover:bg-purple-900 rounded-xl flex items-center justify-center transition-colors border border-purple-500/50 group-hover:border-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.2)]"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d8b4fe" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path><path d="M12 22l10-5"></path></svg></div><span class="text-[10px] text-purple-400 font-bold">AI</span></button>
             <div class="w-8 h-px bg-slate-800"></div>
             
             <button onclick="openExtModal()" class="group flex flex-col items-center gap-1 w-full"><div class="w-10 h-10 bg-slate-800 group-hover:bg-indigo-900 rounded-xl flex items-center justify-center transition-colors border border-slate-700 group-hover:border-indigo-400 shadow-[0_0_10px_rgba(99,102,241,0.2)]"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg></div><span class="text-[10px] text-indigo-400 font-bold">Exts</span></button>
 
-            <button onclick="showPanel('bg')" class="group flex flex-col items-center gap-1 w-full"><div class="w-10 h-10 bg-slate-500 group-hover:text-gold font-medium"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-slate-300 group-hover:text-white"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg></div><span class="text-[10px] text-slate-500 group-hover:text-gold font-medium">Bg</span></button>
+            <button onclick="showPanel('bg')" class="group flex flex-col items-center gap-1 w-full"><div class="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center transition-colors border border-slate-700 group-hover:border-gold"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-slate-300 group-hover:text-white"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg></div><span class="text-[10px] text-slate-500 group-hover:text-gold font-medium">Bg</span></button>
             <button onclick="addElement('text')" class="group flex flex-col items-center gap-1 w-full"><div class="w-10 h-10 bg-slate-800 group-hover:bg-slate-700 rounded-xl flex items-center justify-center transition-colors border border-slate-700 group-hover:border-gold"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-slate-300 group-hover:text-white"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg></div><span class="text-[10px] text-slate-500 group-hover:text-gold font-medium">Text</span></button>
             <button onclick="addElement('rect')" class="group flex flex-col items-center gap-1 w-full"><div class="w-10 h-10 bg-slate-800 group-hover:bg-slate-700 rounded-xl flex items-center justify-center transition-colors border border-slate-700 group-hover:border-gold"><div class="w-5 h-5 border-2 border-slate-300 group-hover:border-white rounded-sm"></div></div><span class="text-[10px] text-slate-500 group-hover:text-gold font-medium">Box</span></button>
             <button onclick="addElement('circle')" class="group flex flex-col items-center gap-1 w-full"><div class="w-10 h-10 bg-slate-800 group-hover:bg-slate-700 rounded-xl flex items-center justify-center transition-colors border border-slate-700 group-hover:border-gold"><div class="w-5 h-5 border-2 border-slate-300 group-hover:border-white rounded-full"></div></div><span class="text-[10px] text-slate-500 group-hover:text-gold font-medium">Circle</span></button>
@@ -179,6 +191,7 @@
             <label class="group flex flex-col items-center gap-1 w-full cursor-pointer"><div class="w-10 h-10 bg-slate-800 group-hover:bg-slate-700 rounded-xl flex items-center justify-center transition-colors border border-slate-700 group-hover:border-gold"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-slate-300 group-hover:text-white"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg></div><span class="text-[10px] text-slate-500 group-hover:text-gold font-medium">Image</span><input type="file" id="img-upload" accept="image/*" class="hidden" onchange="handleImageUpload(this)"></label>
         </aside>
 
+        <!-- Canvas Workspace -->
         <main id="workspace" tabindex="0" class="flex-grow relative overflow-hidden flex flex-col items-center justify-center p-10 pb-32 focus:outline-none">
             <div id="artboard" class="bg-white relative w-[800px] h-[600px] xl:w-[1000px] xl:h-[750px] flex-shrink-0 transition-all duration-200" onclick="deselectAll(event)"></div>
             <div id="slide-strip-container" class="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-slate-900/90 border border-slate-700 rounded-2xl p-2 flex flex-col items-center shadow-2xl z-50 w-auto max-w-[90%]">
@@ -196,6 +209,7 @@
             </div>
         </main>
 
+        <!-- Properties Panel Sidebar -->
         <aside id="properties-panel" class="w-72 bg-slate-900 border-l border-slate-800 flex flex-col z-40">
             <!-- Tabs -->
             <div class="flex border-b border-slate-800">
@@ -299,18 +313,60 @@
         </aside>
     </div>
 
-    <!-- Modals -->
-    <div id="cipher-modal" class="modal-overlay"><div class="bg-slate-900 border border-gold p-6 rounded-lg w-96 shadow-2xl"><h3 class="text-gold font-bold text-lg mb-2" id="modal-title">Project Cipher</h3><p class="text-xs text-slate-400 mb-4" id="modal-desc">Copy code.</p><textarea id="modal-input" rows="6" class="w-full bg-slate-800 text-xs text-green-400 font-mono p-2 rounded border border-slate-700 focus:border-gold outline-none"></textarea>
+    <!-- Project Export/Save Modal -->
+    <div id="cipher-modal" class="modal-overlay">
+        <div class="bg-slate-900 border border-gold p-6 rounded-lg w-96 shadow-2xl">
+            <h3 class="text-gold font-bold text-lg mb-2" id="modal-title">Project Cipher</h3>
+            <p class="text-xs text-slate-400 mb-4" id="modal-desc">Copy code.</p>
+            <textarea id="modal-input" rows="6" class="w-full bg-slate-800 text-xs text-green-400 font-mono p-2 rounded border border-slate-700 focus:border-gold outline-none"></textarea>
+            <div class="flex gap-2 mt-4">
+                <button onclick="closeModal()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-2 rounded text-xs">Close</button>
+                <button id="modal-action-btn" class="flex-1 bg-gold hover:opacity-90 text-white font-bold py-2 rounded text-xs">Copy</button>
+            </div>
+            <div id="modal-compress-container" class="mt-4 pt-4 border-t border-slate-800 text-center">
+                <button onclick="forceCompressAllImages()" class="text-xs text-purple-400 hover:text-purple-300 font-bold border border-purple-500 rounded px-4 py-2 w-full mb-2">Compress All Images (Fix Lag)</button>
+            </div>
+            <div id="modal-footer-extra" class="text-center hidden">
+                <button onclick="clearLocalData()" class="text-xs text-red-500 hover:text-red-400 underline">Clear Local Data & Reset</button>
+            </div>
+        </div>
+    </div>
     
-    <div class="flex gap-2 mt-4"><button onclick="closeModal()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-2 rounded text-xs">Close</button><button id="modal-action-btn" class="flex-1 bg-gold hover:opacity-90 text-white font-bold py-2 rounded text-xs">Copy</button></div><div id="modal-compress-container" class="mt-4 pt-4 border-t border-slate-800 text-center"><button onclick="forceCompressAllImages()" class="text-xs text-purple-400 hover:text-purple-300 font-bold border border-purple-500 rounded px-4 py-2 w-full mb-2">Compress All Images (Fix Lag)</button></div><div id="modal-footer-extra" class="text-center hidden"><button onclick="clearLocalData()" class="text-xs text-red-500 hover:text-red-400 underline">Clear Local Data & Reset</button></div></div></div>
+    <!-- Robust Multi-Purpose Confirmation Modal -->
+    <div id="delete-modal" class="modal-overlay">
+        <div class="bg-slate-900 border border-red-500 p-6 rounded-lg w-80 shadow-2xl">
+            <h3 class="text-red-500 font-bold text-lg mb-2" id="delete-modal-title">Delete Action</h3>
+            <p class="text-xs text-slate-400 mb-4" id="delete-modal-msg">Confirm deletion?</p>
+            <div class="flex gap-2 mt-4">
+                <button onclick="closeDeleteModal()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-2 rounded text-xs">Cancel</button>
+                <button id="delete-modal-confirm-btn" onclick="confirmDelete()" class="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-2 rounded text-xs">Delete</button>
+            </div>
+        </div>
+    </div>
     
-    <!-- Reuse Delete Modal for both slides and projects safely -->
-    <div id="delete-modal" class="modal-overlay"><div class="bg-slate-900 border border-red-500 p-6 rounded-lg w-80 shadow-2xl"><h3 class="text-red-500 font-bold text-lg mb-2" id="delete-modal-title">Delete Action</h3><p class="text-xs text-slate-400 mb-4" id="delete-modal-msg">Confirm deletion?</p><div class="flex gap-2 mt-4"><button onclick="closeDeleteModal()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-2 rounded text-xs">Cancel</button><button id="delete-modal-confirm-btn" onclick="confirmDeleteSlide()" class="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-2 rounded text-xs">Delete</button></div></div></div>
-    
-    <!-- AI Modal -->
-    <div id="ai-modal" class="modal-overlay"><div class="bg-slate-900 border border-purple-500 p-6 rounded-lg w-96 shadow-2xl relative overflow-hidden"><h3 class="text-purple-400 font-bold text-lg mb-1 flex items-center gap-2">Magic Studio</h3><p class="text-xs text-slate-400 mb-4">Generate content with Puter AI</p><div class="space-y-3"><textarea id="ai-prompt" rows="3" class="w-full bg-slate-800 text-sm text-white p-3 rounded border border-slate-700 focus:border-purple-500 outline-none" placeholder="Describe what you want..."></textarea><div class="flex gap-2"><button onclick="generateAI('text')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white py-2 rounded text-xs border border-slate-600">Generate Text</button><button onclick="generateAI('image')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white py-2 rounded text-xs border border-slate-600">Generate Image</button></div></div><div class="flex gap-2 mt-4 border-t border-slate-800 pt-4"><button onclick="closeAiModal()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-2 rounded text-xs">Close</button></div><div id="ai-loading" class="absolute inset-0 bg-slate-900/90 hidden flex-col items-center justify-center z-50"><div class="ai-loader mb-2"></div><p class="text-xs text-purple-400 animate-pulse" id="ai-loading-text">Creating Magic...</p></div></div></div>
+    <!-- AI Generator Modal -->
+    <div id="ai-modal" class="modal-overlay">
+        <div class="bg-slate-900 border border-purple-500 p-6 rounded-lg w-96 shadow-2xl relative overflow-hidden">
+            <h3 class="text-purple-400 font-bold text-lg mb-1 flex items-center gap-2">Magic Studio</h3>
+            <p class="text-xs text-slate-400 mb-4">Generate content with Puter AI</p>
+            <div class="space-y-3">
+                <textarea id="ai-prompt" rows="3" class="w-full bg-slate-800 text-sm text-white p-3 rounded border border-slate-700 focus:border-purple-500 outline-none" placeholder="Describe what you want..."></textarea>
+                <div class="flex gap-2">
+                    <button onclick="generateAI('text')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white py-2 rounded text-xs border border-slate-600">Generate Text</button>
+                    <button onclick="generateAI('image')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white py-2 rounded text-xs border border-slate-600">Generate Image</button>
+                </div>
+            </div>
+            <div class="flex gap-2 mt-4 border-t border-slate-800 pt-4">
+                <button onclick="closeAiModal()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-2 rounded text-xs">Close</button>
+            </div>
+            <div id="ai-loading" class="absolute inset-0 bg-slate-900/90 hidden flex-col items-center justify-center z-50">
+                <div class="ai-loader mb-2"></div>
+                <p class="text-xs text-purple-400 animate-pulse" id="ai-loading-text">Creating Magic...</p>
+            </div>
+        </div>
+    </div>
 
-    <!-- Publish Modal -->
+    <!-- Live Publish Subdomain Domain Modal -->
     <div id="publish-modal" class="modal-overlay">
         <div class="bg-slate-900 border border-emerald-500 p-6 rounded-lg w-96 shadow-2xl relative">
             <h3 class="text-emerald-400 font-bold text-lg mb-2">Publish to Web</h3>
@@ -326,7 +382,7 @@
         </div>
     </div>
 
-    <!-- Extensions Modal -->
+    <!-- External Embed Extensions Modal -->
     <div id="ext-modal" class="modal-overlay">
         <div class="bg-slate-900 border border-indigo-500 p-6 rounded-lg w-[500px] shadow-2xl relative overflow-hidden flex flex-col max-h-[80vh]">
             <h3 class="text-indigo-400 font-bold text-lg mb-1">Extensions Library</h3>
@@ -340,7 +396,7 @@
         </div>
     </div>
 
-    <!-- Toast Notification -->
+    <!-- Toast Notification Banner -->
     <div id="toast" class="fixed bottom-8 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full text-white text-sm font-medium shadow-lg transition-all duration-300 opacity-0 translate-y-4 z-[2000] pointer-events-none bg-slate-800 border-l-4 border-gold"></div>
 
     <script>
@@ -374,7 +430,10 @@
             // Project manager variables
             let projects = [];
             let currentProjectId = null;
-            let projectToDeleteId = null; // Track project target for custom delete modal safely
+            
+            // Global state for unified deletion confirm window
+            window.projectToDeleteId = null;
+            window.deleteActionType = null; // 'slide', 'project', or 'clear-data'
 
             // Initialize multi-project manager system
             function initProjectSystem() {
@@ -430,6 +489,7 @@
                 
                 projects.forEach(proj => {
                     const card = document.createElement('div');
+                    // Changed opacity-0 to opacity-85 on touch screen displays via responsive utility classes, always showing delete triggers reliably
                     card.className = 'bg-slate-800 border border-slate-700/60 p-4 rounded-xl flex flex-col gap-3 hover:border-gold transition-all relative group cursor-pointer shadow-md hover:shadow-xl hover:translate-y-[-2px] duration-200';
                     card.onclick = (e) => {
                         if (!e.target.closest('button')) {
@@ -453,7 +513,7 @@
                             <h4 class="text-white font-bold text-sm truncate pr-6 group-hover:text-gold transition-colors" title="${proj.title}">${proj.title}</h4>
                             <span class="text-[10px] text-slate-500 mt-0.5">Edited ${formattedDate}</span>
                         </div>
-                        <button onclick="deleteProject('${proj.id}', event)" class="absolute bottom-4 right-4 p-1.5 text-slate-500 hover:text-red-400 hover:bg-slate-700/50 rounded-lg opacity-0 group-hover:opacity-100 transition-all cursor-pointer shadow" title="Delete presentation">
+                        <button onclick="deleteProject('${proj.id}', event)" class="absolute bottom-4 right-4 p-1.5 text-slate-400 hover:text-red-400 bg-slate-900/80 border border-slate-700 rounded-lg opacity-85 md:opacity-0 md:group-hover:opacity-100 transition-all cursor-pointer shadow z-10" title="Delete presentation">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                         </button>
                     `;
@@ -503,12 +563,13 @@
 
             // Custom deleteProject logic utilizing confirm modal dynamically
             window.deleteProject = function(id, event) {
-                event.stopPropagation();
+                if (event) event.stopPropagation();
                 if (projects.length <= 1) {
                     showToast("You must keep at least one presentation in your studio.", true);
                     return;
                 }
-                projectToDeleteId = id;
+                window.deleteActionType = 'project';
+                window.projectToDeleteId = id;
                 const proj = projects.find(p => p.id === id);
                 const title = proj ? proj.title : "this presentation";
                 
@@ -516,24 +577,20 @@
                 document.getElementById('delete-modal-title').innerText = "Delete Presentation";
                 document.getElementById('delete-modal-msg').innerText = `Are you sure you want to delete "${title}"? This action cannot be undone.`;
                 
-                const confirmBtn = document.getElementById('delete-modal-confirm-btn');
-                if (confirmBtn) {
-                    confirmBtn.setAttribute('onclick', 'confirmDeleteProject()');
-                }
                 document.getElementById('delete-modal').classList.add('active');
             };
 
             window.confirmDeleteProject = function() {
-                if (projectToDeleteId) {
-                    projects = projects.filter(p => p.id !== projectToDeleteId);
+                if (window.projectToDeleteId) {
+                    projects = projects.filter(p => p.id !== window.projectToDeleteId);
                     saveProjectsToLocalStorage();
                     renderRecentProjects();
                     showToast("Presentation deleted successfully.");
                     
-                    if (currentProjectId === projectToDeleteId) {
+                    if (currentProjectId === window.projectToDeleteId) {
                         openProject(projects[0].id);
                     }
-                    projectToDeleteId = null;
+                    window.projectToDeleteId = null;
                 }
                 closeDeleteModal();
             };
@@ -792,13 +849,9 @@
             };
 
             window.clearLocalData = function() {
-                // Customized dynamic confirm block replacing native confirm()
+                window.deleteActionType = 'clear-data';
                 document.getElementById('delete-modal-title').innerText = "Clear All Local Data";
                 document.getElementById('delete-modal-msg').innerText = "This will delete all presentations from browser storage. Are you sure?";
-                const confirmBtn = document.getElementById('delete-modal-confirm-btn');
-                if (confirmBtn) {
-                    confirmBtn.setAttribute('onclick', 'confirmClearLocalData()');
-                }
                 document.getElementById('delete-modal').classList.add('active');
             };
 
@@ -1064,21 +1117,28 @@
             window.setTheme = function(theme) { switch(theme) { case 'white': artboard.style.background = '#ffffff'; props.bgColorInput.value = '#ffffff'; break; case 'black': artboard.style.background = '#000000'; props.bgColorInput.value = '#000000'; break; case 'gold': artboard.style.background = 'linear-gradient(135deg, #fcd34d 0%, #d97706 100%)'; break; case 'midnight': artboard.style.background = 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)'; break; case 'royal': artboard.style.background = 'linear-gradient(135deg, #1e3a8a 0%, #4c1d95 100%)'; break; case 'sunrise': artboard.style.background = 'linear-gradient(135deg, #fb923c 0%, #ec4899 100%)'; break; } saveCurrentSlideState(); };
             
             window.openDeleteModal = function() {
+                window.deleteActionType = 'slide';
                 document.getElementById('delete-modal-title').innerText = "Delete Slide";
                 if (slides.length <= 1) {
                     deleteModalMsg.innerText = "Only one slide left. Clear it instead?";
                 } else {
                     deleteModalMsg.innerText = `Delete slide ${currentSlideIndex + 1}?`;
                 }
-                const confirmBtn = document.getElementById('delete-modal-confirm-btn');
-                if (confirmBtn) {
-                    confirmBtn.setAttribute('onclick', 'confirmDeleteSlide()');
-                }
-                deleteModal.classList.add('active');
+                document.getElementById('delete-modal').classList.add('active');
             };
             
             window.closeDeleteModal = function() {
                 deleteModal.classList.remove('active');
+            };
+
+            window.confirmDelete = function() {
+                if (window.deleteActionType === 'project') {
+                    window.confirmDeleteProject();
+                } else if (window.deleteActionType === 'clear-data') {
+                    window.confirmClearLocalData();
+                } else {
+                    window.confirmDeleteSlide();
+                }
             };
             
             window.confirmDeleteSlide = function() {
@@ -1241,7 +1301,14 @@
                 renderLayers(); 
             }
             window.selectElement = selectElement;
-            window.deselectAll = function(e) { if (e.target === artboard) window.selectElement(null); };
+            window.deselectAll = function(e) { 
+                if (e.target === artboard) {
+                    if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
+                        document.activeElement.blur();
+                    }
+                    window.selectElement(null); 
+                }
+            };
             function showPanel(name) { Object.values(panels).forEach(p => { if (p && p !== panels.actions) p.classList.add('hidden'); }); if(panels[name]) panels[name].classList.remove('hidden'); if (name === 'bg' || name === 'el') window.switchTab('props'); }
             window.showPanel = showPanel;
 
